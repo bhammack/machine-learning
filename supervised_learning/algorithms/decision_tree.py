@@ -1,11 +1,12 @@
 import numpy as np
 import sklearn.model_selection as ms
-from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
+from subprocess import call
 
 class DecisionTreeLearner():
     """test"""
     def __init__(self):
-        self.classifier = DecisionTreeClassifier()
+        self.classifier = tree.DecisionTreeClassifier()
 
     def train(self, x, y):
         """Train the learner on the training data set."""
@@ -19,9 +20,7 @@ class DecisionTreeLearner():
         """Test the learned tree on a test data set."""
         return self.classifier.predict(data)
 
-
-
-
-
-
-
+    def export(self, filename):
+        """Exports the decision tree as a graphviz DOT file."""
+        tree.export_graphviz(self.classifier.tree_, out_file=filename)
+        call(['dot', '-T', 'png', 'tree.dot', '-o', 'tree.png'])
