@@ -20,7 +20,6 @@ class DecisionTreeLearner():
         """Test the learned tree on a test data set."""
         return self.classifier.predict(data)
 
-    def export(self, filename):
-        """Exports the decision tree as a graphviz DOT file."""
-        tree.export_graphviz(self.classifier.tree_, out_file=filename)
-        call(['dot', '-T', 'png', 'tree.dot', '-o', 'tree.png'])
+    def export(self):
+        """Exports the decision tree in a string tree structure."""
+        return tree.export_text(self.classifier.tree_)

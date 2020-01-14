@@ -10,6 +10,7 @@ def main():
     result = dt.test(adult.x_test)
     score = accuracy_score(result, adult.y_test)
     print(score)
+    print(dt.export())
 
 
 if __name__ == '__main__':
