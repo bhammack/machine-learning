@@ -1,15 +1,16 @@
 import argparse
 from data import adult
 from supervised_learning.algorithms import decision_tree
-
+from sklearn.metrics import accuracy_score
 
 def main():
     print('Hello world!')
-    # print(adult.x_train)
-    # print(adult.y_train)
     dt = decision_tree.DecisionTreeLearner()
-    # print(adult.df_train)
-    # dt.train(adult.x_train, adult.y_train)
+    dt.train(adult.x_train, adult.y_train)
+    result = dt.test(adult.x_test)
+    score = accuracy_score(result, adult.y_test)
+    print(score)
+
 
 if __name__ == '__main__':
     main()

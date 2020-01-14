@@ -17,7 +17,7 @@ class DecisionTreeLearner():
 
     def test(self, data):
         """Test the learned tree on a test data set."""
-        pass
+        return self.classifier.predict(data)
 
 
 
