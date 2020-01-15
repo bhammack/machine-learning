@@ -30,8 +30,8 @@ for col in indexes_to_encode:
     df_test[col] = le.transform(df_test[col])
 # print(df_test)
 
-print(train_labels)
-print(test_labels)
+# print(train_labels)
+# print(test_labels)
 
 # labels = label_encoder.fit_transform(df_train)
 # print(labels)

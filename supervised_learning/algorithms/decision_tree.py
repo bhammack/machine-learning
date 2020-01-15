@@ -1,4 +1,3 @@
-import numpy as np
 import sklearn.model_selection as ms
 from sklearn import tree
 from subprocess import call
