@@ -11,4 +11,4 @@ import numpy as np
 class SVMLearner():
     """test"""
     def __init__(self):
-        self.classifier =svm.SVC()
+        self.classifier = svm.SVC()
