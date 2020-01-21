@@ -1,10 +1,23 @@
 import argparse
 from data import adult
 from data import iris
+from data import wine
 from supervised_learning.algorithms import decision_tree
 from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
 import time
 import sys
+
+
+
+def plot_validation_curve():
+    plt.title('Validation Curve')
+    plt.xlabel('idk x label')
+    plt.ylabel('Score')
+    plt.ylim(0.0, 1.1)
+    # https://scikit-learn.org/stable/auto_examples/model_selection/plot_validation_curve.html
+    # https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html
+
 
 def dt():
     """Run the decision tree experiment."""
@@ -20,6 +33,12 @@ def dt():
     result = dt.test(iris.x_test)
     score = accuracy_score(result, iris.y_test)
     print('Iris', score)
+
+    dt = decision_tree.DecisionTreeLearner()
+    dt.train(wine.x_train, wine.y_train)
+    result = dt.test(wine.x_test)
+    score = accuracy_score(result, wine.y_test)
+    print('Wine', score)
 
 
 def knn():
