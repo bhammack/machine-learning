@@ -1,24 +1,20 @@
 import sklearn.model_selection as ms
 from sklearn import tree
 from subprocess import call
+from . import AbstractLearner
 
-class DecisionTreeLearner():
+class DecisionTreeLearner(AbstractLearner):
     """test"""
     def __init__(self):
-        self.classifier = tree.DecisionTreeClassifier()
+        self.dt_classifier = tree.DecisionTreeClassifier()
 
-    def train(self, x, y):
-        """Train the learner on the training data set."""
-        self.classifier = self.classifier.fit(x, y)
-        return self
+    def classifier(self): # pylint: disable=E0202
+        return self.dt_classifier
 
     def prune(self):
         """Prune a trained tree."""
-
-    def test(self, data):
-        """Test the learned tree on a test data set."""
-        return self.classifier.predict(data)
+        pass
 
     def export(self):
         """Exports the decision tree in a string tree structure."""
-        return tree.export_text(self.classifier.tree_)
+        return tree.export_text(self.dt_classifier.tree_)

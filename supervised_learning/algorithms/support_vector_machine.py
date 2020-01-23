@@ -6,9 +6,12 @@ from sklearn.utils import check_X_y
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_is_fitted, check_array
 import numpy as np
+from . import AbstractLearner
 
-
-class SVMLearner():
+class SVMLearner(AbstractLearner):
     """test"""
     def __init__(self):
-        self.classifier = svm.SVC()
+        self.svm_classifier = svm.SVC()
+
+    def classifier(self):
+        return self.svm_classifier
