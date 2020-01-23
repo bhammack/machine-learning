@@ -1,6 +1,5 @@
 import argparse
 from data import adult
-from data import iris
 from data import wine
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
@@ -23,23 +22,20 @@ def plot_validation_curve():
 def experiment(learner):
     start = time.time()
 
-    learner.train(adult.x_train, adult.y_train)
-    result = learner.test(adult.x_test)
-    score = accuracy_score(result, adult.y_test)
-    print('Adult', score)
+    if args.adult:
+        learner.train(adult.x_train, adult.y_train)
+        result = learner.test(adult.x_test)
+        score = accuracy_score(result, adult.y_test)
+        print('Adult', score)
 
-    learner.train(iris.x_train, iris.y_train)
-    result = learner.test(iris.x_test)
-    score = accuracy_score(result, iris.y_test)
-    print('Iris', score)
-
-    learner.train(wine.x_train, wine.y_train)
-    result = learner.test(wine.x_test)
-    score = accuracy_score(result, wine.y_test)
-    print('Wine', score)
+    if args.wine:
+        learner.train(wine.x_train, wine.y_train)
+        result = learner.test(wine.x_test)
+        score = accuracy_score(result, wine.y_test)
+        print('Wine', score)
 
     end = time.time()
-    print('Experiment duration:', str(end - start))
+    print('Experiment duration: {:.2f} secs'.format(end - start))
 
 def dt():
     """Run the decision tree experiment."""
@@ -78,6 +74,11 @@ if __name__ == '__main__':
     parser.add_argument('--nn', action='store_true', help='Run the artificial neural network experiment')
     parser.add_argument('--svm', action='store_true', help='Run the support vector machine experiment')
     parser.add_argument('--bdt', action='store_true', help='Run the boosted decision tree classifier experiment')
+
+    parser.add_argument('--adult', action='store_true', help='Experiment with the adult data set')
+    parser.add_argument('--wine', action='store_true', help='Experiment with the wine data set')
+
+
     args = parser.parse_args()
 
     if args.dt:
