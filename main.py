@@ -26,19 +26,20 @@ def experiment(learner):
         learner.train(adult.x_train, adult.y_train)
         result = learner.test(adult.x_test)
         score = accuracy_score(result, adult.y_test)
-        print('Adult', score)
+        print('Adult:\t', score)
 
     if args.wine:
         learner.train(wine.x_train, wine.y_train)
         result = learner.test(wine.x_test)
         score = accuracy_score(result, wine.y_test)
-        print('Wine', score)
+        print('Wine:\t', score)
 
     end = time.time()
     print('Experiment duration: {:.2f} secs'.format(end - start))
 
 def dt():
     """Run the decision tree experiment."""
+    print('Running the decision tree experiment...')
     experiment(DecisionTreeLearner())
 
 

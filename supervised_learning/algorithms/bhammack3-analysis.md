@@ -1,6 +1,10 @@
 # Supervised Learning
 **Project Analysis**
 
+Benjamin Hammack
+
+CS7641, Spring 2020
+
 
 ## Introduction / Development
 
@@ -9,21 +13,26 @@ It was mentioned often within the course discussion board and assignment descrip
 
 ## Data Sets
 
-### Iris [4]
-The Iris data set was found and selected on the UCI machine learning data sets library. It is one of the most popular data sets used.
+### Adult [2]
+The Adult data set was found on the UCI machine learning data sets library. This data set includes attributes of anonomyous U.S. citizens including marital status, occupation, age, location of residence, and other attributes with the objective being to predict whether the individual's occupational annual salary is greater than 50,000 dollars
 
-In terms of data characteristics, the set is described as "contains 3 classes of 50 instances each, where each class referecs to a type of iris plant". This data set was selected for this assignment due to the following description that "one class is linearly separable from the other two, the latter of which are NOT linearly separaable from each other" [4]. Based on this notion that two of the classes were linearly married, I desired to run experiements of different models to learn and discover how to optimize when it is known beforehand that some of the data set is linearly inseparable.
+This data set was chosen and deemed "interesting" because I was looking for a data set that contained both categorical variables (such as marital status, gender, occupation) and non-categorical variables (such as age, capital gains & losses).
 
+<real world applicability of the data set here>
 
-### Adult [3]
-The Adult data set was found and selected also on the UCI machine learning data sets library. This data set includes attributes of anonomyous U.S. citizens including marital status, occupation, age, location of residence, and other attributes with the objective being to predict whether the individual's occupational annual salary is greater than 50,000 dollars
+### Wine Quality [3]
+The wine quality data set was also found on the UCI machine learning data sets library. This data set includes ~5000 samples of chemical characteristics of wine, as as pH level, concentrations of various acids, alcohol content, and more, with the objective being to predict the wine's quality (a measure between 0 and 10).
 
-### What's "Interesting" about them?
+This data set was chosen and deemed "interesting" because 1. who doesn't like wine? and 2. the data contained within the set was entirely continuious, but produced a categorical/discrete output of rating. Additionally on first thought, I would deem wine quality a subjective trait measured and evaluated only by the snobbiest wine-o's. However, I was curious if there were any truth to the matter.
+
+Unfortunately, this data set masked the brand and price of the wine tested, so an accurately trained model (artificial wine snob, if you will) cannot produce any direct real-world impacts.
+
 
 ## Classifiers
 
 
 ### Decision Tree
+
 
 ### Neural Network
 
@@ -35,14 +44,14 @@ The Adult data set was found and selected also on the UCI machine learning data 
 
 
 ### Boosting
-
+* From the course slack chat, it was recommended to use the AdaBoostedClassifier
 
 ## Conclusion
 
 
 ## Sources
 1. http://benalexkeen.com/decision-tree-classifier-in-python-using-scikit-learn/
-2. https://github.com/cmaron/CS-7641-assignments
-3. https://archive.ics.uci.edu/ml/datasets/Adult
-4. https://archive.ics.uci.edu/ml/datasets/Iris
-5. https://www.ritchieng.com/machinelearning-one-hot-encoding/
+2. https://archive.ics.uci.edu/ml/datasets/Adult
+3. https://archive.ics.uci.edu/ml/datasets/Wine+Quality
+4. https://www.ritchieng.com/machinelearning-one-hot-encoding/
+
