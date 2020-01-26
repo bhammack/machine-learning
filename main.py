@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import time
 import sys
+from pdb import set_trace as debug
 from supervised_learning.algorithms.decision_tree import DecisionTreeLearner
 from supervised_learning.algorithms.k_nearest_neighbor import KNNLearner
 from supervised_learning.algorithms.boosted_tree import BoostedTreeLearner
@@ -19,20 +20,24 @@ def plot_validation_curve():
     # https://scikit-learn.org/stable/auto_examples/model_selection/plot_validation_curve.html
     # https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html
 
+
+
+def get_data_set():
+    if args.adult:
+        return adult.x_train, adult.x_test, adult.y_train, adult.y_test
+    elif args.wine:
+        return wine.x_train, wine.x_test, wine.y_train, wine.y_test
+
+
 def experiment(learner):
     start = time.time()
+    xtrain, xtest, ytrain, ytest = get_data_set()
 
-    if args.adult:
-        learner.train(adult.x_train, adult.y_train)
-        result = learner.test(adult.x_test)
-        score = accuracy_score(result, adult.y_test)
-        print('Adult:\t', score)
-
-    if args.wine:
-        learner.train(wine.x_train, wine.y_train)
-        result = learner.test(wine.x_test)
-        score = accuracy_score(result, wine.y_test)
-        print('Wine:\t', score)
+    learner.train(xtrain, ytrain)
+    result = learner.test(xtest)
+    score = accuracy_score(result, ytest)
+    print('Score:\t', score)
+    debug()
 
     end = time.time()
     print('Experiment duration: {:.2f} secs'.format(end - start))
