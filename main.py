@@ -11,12 +11,18 @@ from supervised_learning.algorithms.k_nearest_neighbor import KNNLearner
 from supervised_learning.algorithms.boosted_tree import BoostedTreeLearner
 from supervised_learning.algorithms.neural_network import NeuralNetworkLearner
 from supervised_learning.algorithms.support_vector_machine import SVMLearner
+import numpy as np
+
+from sklearn.model_selection import validation_curve, learning_curve
+from sklearn.metrics import plot_roc_curve
+
 
 def plot_validation_curve():
-    plt.title('Validation Curve')
-    plt.xlabel('idk x label')
-    plt.ylabel('Score')
-    plt.ylim(0.0, 1.1)
+    pass
+    # plt.title('Validation Curve')
+    # plt.xlabel('idk x label')
+    # plt.ylabel('Score')
+    # plt.ylim(0.0, 1.1)
     # https://scikit-learn.org/stable/auto_examples/model_selection/plot_validation_curve.html
     # https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html
 
@@ -35,9 +41,31 @@ def experiment(learner):
 
     learner.train(xtrain, ytrain)
     result = learner.test(xtest)
+
     score = accuracy_score(result, ytest)
     print('Score:\t', score)
-    debug()
+
+    # param_name = "ccp_alpha"
+    # param_range = np.logspace(-6, -1, 5)
+    # train_scores, test_scores = validation_curve(learner.classifier(), xtest, ytest, param_name, param_range, scoring="accuracy")
+    train_sizes, train_scores, test_scores = learning_curve(learner.classifier(), xtrain, ytrain, scoring="accuracy")
+
+    # get the mean and std to "center" the plots
+    train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
+    test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
+
+    plt.plot(train_sizes, train_mean, '--', color="#111111",  label="Training score")
+    plt.plot(train_sizes, test_mean, color="#111111", label="Cross-validation score")
+
+    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, color="#DDDDDD")
+    plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, color="#DDDDDD")
+
+    plt.title("Learning Curve")
+    plt.xlabel("Training Set Size"), plt.ylabel("Accuracy Score"), plt.legend(loc="best")
+    plt.tight_layout()
+    plt.show()
+
+    # debug()
 
     end = time.time()
     print('Experiment duration: {:.2f} secs'.format(end - start))
