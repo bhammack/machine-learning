@@ -24,9 +24,19 @@ class AbstractLearner():
     def set_params(self, **params):
         return self.classifier().set_params(**params)
 
+    @abstractmethod
+    def tune(self):
+        """Defined by the learners. Learners must return the params."""
+        pass
+
     def _tune(self, params, x, y):
         """Search the parameter space for the classifier for the best tuned hyperparameters."""
         # https://www.pyimagesearch.com/2016/08/15/how-to-tune-hyperparameters-with-python-and-scikit-learn/
         grid = GridSearchCV(self.classifier(), params)
         grid.fit(x, y)
         return grid.best_params_
+
+    @abstractmethod
+    def get_validation_param(self):
+        """Defined by the learners. Return a tuple of the validation parameter name and range."""
+        pass

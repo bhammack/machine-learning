@@ -19,12 +19,9 @@ for col in indexes_to_encode:
     labels[col] = le.classes_
     df[col] = le.transform(df[col])
 
-print(labels)
+# print(labels)
 y = df.pop(14)
 x = df
-
-print(x)
-print(y)
 
 test_size = 0.33 # test data is 1/3 of original data set.
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size)

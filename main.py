@@ -17,15 +17,53 @@ from sklearn.model_selection import validation_curve, learning_curve
 from sklearn.metrics import plot_roc_curve
 
 
-def plot_validation_curve():
-    pass
-    # plt.title('Validation Curve')
-    # plt.xlabel('idk x label')
-    # plt.ylabel('Score')
-    # plt.ylim(0.0, 1.1)
-    # https://scikit-learn.org/stable/auto_examples/model_selection/plot_validation_curve.html
-    # https://scikit-learn.org/stable/auto_examples/model_selection/plot_learning_curve.html
+def plot_validation_curve(learner, x, y):
+    """Plot the validation curve."""
+    param_name, param_range = learner.get_validation_param()
+    print('Computing validation curve...')
+    train_scores, test_scores = validation_curve(
+        learner.classifier(),
+        x,
+        y,
+        param_name=param_name,
+        param_range=param_range,
+        scoring="accuracy",
+        n_jobs=-1)
+    train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
+    test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
 
+    plt.title("Validation Curve: " + type(learner).__name__)
+    plt.plot(param_range, train_mean, label="Training score", color="darkorange")
+    plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
+    plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, alpha=0.2, color="darkorange")
+    plt.fill_between(param_range, test_mean - test_std, test_mean + test_std, alpha=0.2, color="navy")
+    plt.xlabel(param_name), plt.ylabel("Score"), plt.legend(loc="best")
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_learning_curve(learner, x, y):
+    """Plot the learning curve, a function of accuracy over N, the size of the data set."""
+    print('Computing learning curve...')
+    train_sizes, train_scores, test_scores = learning_curve(
+        learner.classifier(),
+        x,
+        y,
+        cv=5,  # number of folds in cross-validation
+        n_jobs=-1,  # number of cores to use
+        scoring="accuracy")
+    # get the mean and std to "center" the plots
+    train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
+    test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
+
+    plt.plot(train_sizes, train_mean, color="darkorange",  label="Training score")
+    plt.plot(train_sizes, test_mean, color="navy", label="Cross-validation score")
+    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.2, color="darkorange")
+    plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.2, color="navy")
+    plt.title("Learning Curve: " + type(learner).__name__)
+    plt.xlabel("Training Set Size"), plt.ylabel("Accuracy Score"), plt.legend(loc="best")
+    plt.tight_layout()
+    plt.show()
 
 
 def get_data_set():
@@ -36,37 +74,19 @@ def get_data_set():
 
 
 def experiment(learner):
+    """Run the experiment with the specified learner and data set."""
     start = time.time()
     xtrain, xtest, ytrain, ytest = get_data_set()
-
+    print('Learner is using a', type(learner.classifier()).__name__, 'classifier with params...')
+    print(learner.get_params())
     learner.train(xtrain, ytrain)
     result = learner.test(xtest)
-
     score = accuracy_score(result, ytest)
     print('Score:\t', score)
 
-    # param_name = "ccp_alpha"
-    # param_range = np.logspace(-6, -1, 5)
-    # train_scores, test_scores = validation_curve(learner.classifier(), xtest, ytest, param_name, param_range, scoring="accuracy")
-    train_sizes, train_scores, test_scores = learning_curve(learner.classifier(), xtrain, ytrain, scoring="accuracy")
-
-    # get the mean and std to "center" the plots
-    train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
-    test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
-
-    plt.plot(train_sizes, train_mean, '--', color="#111111",  label="Training score")
-    plt.plot(train_sizes, test_mean, color="#111111", label="Cross-validation score")
-
-    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, color="#DDDDDD")
-    plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, color="#DDDDDD")
-
-    plt.title("Learning Curve")
-    plt.xlabel("Training Set Size"), plt.ylabel("Accuracy Score"), plt.legend(loc="best")
-    plt.tight_layout()
-    plt.show()
-
+    # plot_learning_curve(learner, xtrain, ytrain)
+    plot_validation_curve(learner, xtrain, ytrain)
     # debug()
-
     end = time.time()
     print('Experiment duration: {:.2f} secs'.format(end - start))
 
