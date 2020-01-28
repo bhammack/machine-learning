@@ -37,7 +37,7 @@ def plot_validation_curve(learner, x, y):
     plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
     plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, alpha=0.2, color="darkorange")
     plt.fill_between(param_range, test_mean - test_std, test_mean + test_std, alpha=0.2, color="navy")
-    plt.xlabel(param_name), plt.ylabel("Score"), plt.legend(loc="best")
+    plt.xlabel('Parameter: ' + param_name), plt.ylabel("Score"), plt.legend(loc="best")
     plt.tight_layout()
     plt.show()
 
@@ -84,7 +84,12 @@ def experiment(learner):
     score = accuracy_score(result, ytest)
     print('Score:\t', score)
 
-    # plot_learning_curve(learner, xtrain, ytrain)
+    if args.search:
+        print("Tuning model to search space. Hold on to your shorts!")
+        result = learner.tune(xtrain, ytrain)
+        print(result)
+
+    plot_learning_curve(learner, xtrain, ytrain)
     plot_validation_curve(learner, xtrain, ytrain)
     # debug()
     end = time.time()
@@ -131,6 +136,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--adult', action='store_true', help='Experiment with the adult data set')
     parser.add_argument('--wine', action='store_true', help='Experiment with the wine data set')
+
+    parser.add_argument('--search', action='store_true', help='Search for the best parameter set')
+
 
 
     args = parser.parse_args()

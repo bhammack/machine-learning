@@ -26,11 +26,10 @@ class DecisionTreeLearner(AbstractLearner):
         # self.train(x, y)  # retrain the model outside this class
 
 
-    # TODO: this
+    # Define the parameter space to search with GridSearchCV
     def tune(self, x, y):
         params = {
-            "min_samples_leaf": np.arange(1, 25, 1),
-            "max_depth": [1, 2] # when p = 1, use manhattan distance. p = 2 is euclidean.
+            "max_depth": np.arange(1, 51)
         }
         return self._tune(params, x, y)
 
@@ -39,4 +38,4 @@ class DecisionTreeLearner(AbstractLearner):
         return tree.export_text(self.dt_classifier.tree_)
 
     def get_validation_param(self):
-        return ('min_samples_leaf', np.arange(1, 25, 1))
+        return ('max_depth', np.arange(1, 51))

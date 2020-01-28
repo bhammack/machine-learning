@@ -9,9 +9,12 @@ class SVMLearner(AbstractLearner):
     def classifier(self):
         return self.svm_classifier
 
+    # Data sets need to be scaled for SVM's
+    # https://stats.stackexchange.com/questions/154224/when-using-svms-why-do-i-need-to-scale-the-features
+
     def tune(self, x, y):
         params = {
-            "kernel": ['rbf', 'sigmoid'],
-            "gamma": [] # TODO this
+            "c": [],
+            "kernel": ['rbf', 'linear', 'sigmoid'],
         }
         return self._tune(params, x, y)
