@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import numpy as np
 from data import setup, encode
 
 __location__ = os.path.realpath(
@@ -16,5 +17,6 @@ y = df.pop(14)
 x = df
 
 x_train, x_test, y_train, y_test = setup(x, y)
-
+print('y_train mean', np.mean(y_train))
+print('y_test mean', np.mean(y_test))
 # knn_best_params = {"n_neighbors": 19, "p": 1}

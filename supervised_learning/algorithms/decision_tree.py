@@ -29,7 +29,8 @@ class DecisionTreeLearner(AbstractLearner):
     # Define the parameter space to search with GridSearchCV
     def tune(self, x, y):
         params = {
-            "max_depth": np.arange(1, 51)
+            "max_depth": np.arange(1, 51),
+            "max_leaf_nodes": np.arange(1, 200)
         }
         return self._tune(params, x, y)
 
@@ -38,4 +39,5 @@ class DecisionTreeLearner(AbstractLearner):
         return tree.export_text(self.dt_classifier.tree_)
 
     def get_validation_param(self):
-        return ('max_depth', np.arange(1, 51))
+        return ('max_leaf_nodes', np.arange(2, 51))
+        # return ('max_depth', np.arange(1, 51))

@@ -18,6 +18,6 @@ class NeuralNetworkLearner(AbstractLearner):
             "hidden_layer_sizes": [] # TODO this
         }
         return self._tune(params, x, y)
-    
+
     def get_validation_param(self):
         return ('max_iter', np.arange(1, 51, 3))

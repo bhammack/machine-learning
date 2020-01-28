@@ -44,6 +44,9 @@ def plot_validation_curve(learner, x, y):
 def plot_learning_curve(learner, x, y):
     """Plot the learning curve, a function of accuracy over N, the size of the data set."""
     print('Computing learning curve...')
+
+    # https://scikit-learn.org/stable/modules/model_evaluation.html
+
     train_sizes, train_scores, test_scores = learning_curve(
         learner.classifier(),
         x,
@@ -80,8 +83,10 @@ def experiment(learner):
     print(learner.get_params())
     learner.train(xtrain, ytrain)
     result = learner.test(xtest)
+    probs = learner.probability(xtest)
     score = accuracy_score(result, ytest)
     print('Score:\t', score)
+    print('Probability:\t', probs)
 
     if args.search:
         print("Tuning model to search space. Hold on to your shorts!")

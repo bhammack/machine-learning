@@ -18,6 +18,9 @@ class AbstractLearner():
     def test(self, x):
         return self.classifier().predict(x)
 
+    def probability(self, x):
+        return self.classifier().predict_proba(x)
+
     def get_params(self):
         return self.classifier().get_params()
 
