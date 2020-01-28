@@ -1,6 +1,5 @@
 import argparse
-from data import adult
-from data import wine
+from data import adult, wine, digits
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import time
@@ -69,8 +68,8 @@ def plot_learning_curve(learner, x, y):
 def get_data_set():
     if args.adult:
         return adult.x_train, adult.x_test, adult.y_train, adult.y_test
-    elif args.wine:
-        return wine.x_train, wine.x_test, wine.y_train, wine.y_test
+    elif args.digits:
+        return digits.x_train, digits.x_test, digits.y_train, digits.y_test
 
 
 def experiment(learner):
@@ -135,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('--bdt', action='store_true', help='Run the boosted decision tree classifier experiment')
 
     parser.add_argument('--adult', action='store_true', help='Experiment with the adult data set')
-    parser.add_argument('--wine', action='store_true', help='Experiment with the wine data set')
+    parser.add_argument('--digits', action='store_true', help='Experiment with the handwritten digits data set')
 
     parser.add_argument('--search', action='store_true', help='Search for the best parameter set')
 
