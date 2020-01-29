@@ -15,11 +15,11 @@ class KNNLearner(AbstractLearner):
 
     def tune(self, x, y):
         params = {
-            "n_neighbors": np.arange(1, 51, 3),
+            "n_neighbors": np.arange(1, 51),
             "metric": ["manhattan", "euclidean", "chebyshev"]
         }
         return self._tune(params, x, y)
 
 
     def get_validation_param(self):
-        return ('n_neighbors', np.arange(1, 51, 3))
+        return ('n_neighbors', np.arange(1, 51))

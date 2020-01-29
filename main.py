@@ -17,7 +17,9 @@ from sklearn.metrics import plot_roc_curve
 
 
 def plot_validation_curve(learner, x, y):
-    """Plot the validation curve."""
+    """Plot the validation curve.
+    The validation curve plots the influence of a single hyperparameter
+    on the training score and test score to determine if the model is over or underfitting."""
     param_name, param_range = learner.get_validation_param()
     print('Computing validation curve...')
     train_scores, test_scores = validation_curve(
@@ -42,21 +44,23 @@ def plot_validation_curve(learner, x, y):
 
 
 def plot_learning_curve(learner, x, y):
-    """Plot the learning curve, a function of accuracy over N, the size of the data set."""
+    """Plot the learning curve, 
+    A function of accuracy over N, the size of the data set."""
     print('Computing learning curve...')
 
     # https://scikit-learn.org/stable/modules/model_evaluation.html
 
-    train_sizes, train_scores, test_scores = learning_curve(
+    train_sizes, train_scores, test_scores, fit_times, score_times = learning_curve(
         learner.classifier(),
         x,
         y,
-        cv=5,  # number of folds in cross-validation
+        cv=5,  # number of folds in cross-validation / number of points on the plots
         n_jobs=-1,  # number of cores to use
-        scoring="accuracy")
+        return_times=True)
     # get the mean and std to "center" the plots
     train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
     test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
+    fit_times_mean, fit_times_std = np.mean(fit_times, axis=1), np.std(fit_times, axis=1)
 
     plt.plot(train_sizes, train_mean, color="darkorange",  label="Training score")
     plt.plot(train_sizes, test_mean, color="navy", label="Cross-validation score")
@@ -70,23 +74,24 @@ def plot_learning_curve(learner, x, y):
 
 def get_data_set():
     if args.adult:
-        return adult.x_train, adult.x_test, adult.y_train, adult.y_test
+        return adult.x_train, adult.x_test, adult.y_train, adult.y_test, adult.x, adult.y
     elif args.digits:
-        return digits.x_train, digits.x_test, digits.y_train, digits.y_test
+        return digits.x_train, digits.x_test, digits.y_train, digits.y_test, digits.x, digits.y
 
 
 def experiment(learner):
     """Run the experiment with the specified learner and data set."""
     start = time.time()
-    xtrain, xtest, ytrain, ytest = get_data_set()
+    xtrain, xtest, ytrain, ytest, x, y = get_data_set()
     print('Learner is using a', type(learner.classifier()).__name__, 'classifier with params...')
     print(learner.get_params())
     learner.train(xtrain, ytrain)
+    # print('Error:\t', learner.classifier().score(xtrain, ytrain))
     result = learner.test(xtest)
-    probs = learner.probability(xtest)
+    # probs = learner.probability(xtest)
+    # print('Probability:\t', probs)
     score = accuracy_score(result, ytest)
-    print('Score:\t', score)
-    print('Probability:\t', probs)
+    print('Accuracy Score:\t', score)
 
     if args.search:
         print("Tuning model to search space. Hold on to your shorts!")
