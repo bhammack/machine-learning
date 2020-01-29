@@ -12,7 +12,7 @@ def encode(df, cols_to_encode):
     return df, labels
 
 
-def split(x, y, test_size=0.33):
+def split(x, y, test_size):
     return train_test_split(x, y, test_size=test_size)
 
 
@@ -27,8 +27,8 @@ def scale(x_train, x_test):
     return x_train, x_test
 
 
-def setup(x, y):
+def setup(x, y, test_size=0.33):
     """Called by data set init. Given the raw data, split and scale it."""
-    x_train, x_test, y_train, y_test = split(x, y)
+    x_train, x_test, y_train, y_test = split(x, y, test_size)
     x_train, x_test = scale(x_train, x_test)
     return x_train, x_test, y_train, y_test

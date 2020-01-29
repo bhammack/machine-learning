@@ -18,6 +18,9 @@ class AbstractLearner():
     def test(self, x):
         return self.classifier().predict(x)
 
+    def score(self, x, y):
+        return self.classifier().score(x, y)
+
     def probability(self, x):
         return self.classifier().predict_proba(x)
 
@@ -35,7 +38,7 @@ class AbstractLearner():
     def _tune(self, params, x, y):
         """Search the parameter space for the classifier for the best tuned hyperparameters."""
         # https://www.pyimagesearch.com/2016/08/15/how-to-tune-hyperparameters-with-python-and-scikit-learn/
-        grid = GridSearchCV(self.classifier(), params)
+        grid = GridSearchCV(self.classifier(), params, verbose=1)
         grid.fit(x, y)
         return grid.best_params_
 

@@ -10,7 +10,7 @@ from . import AbstractLearner
 class DecisionTreeLearner(AbstractLearner):
     """test"""
     def __init__(self):
-        self.dt_classifier = tree.DecisionTreeClassifier()
+        self.dt_classifier = tree.DecisionTreeClassifier(max_depth=5)
 
     def classifier(self): # pylint: disable=E0202
         return self.dt_classifier

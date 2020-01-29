@@ -44,8 +44,10 @@ def plot_validation_curve(learner, x, y):
 
 
 def plot_learning_curve(learner, x, y):
-    """Plot the learning curve, 
+    """Plot the learning curve,
     A function of accuracy over N, the size of the data set."""
+    # Important note on overfitting!
+    # https://stats.stackexchange.com/questions/283738/sklearn-learning-curve-example
     print('Computing learning curve...')
 
     # https://scikit-learn.org/stable/modules/model_evaluation.html
@@ -90,8 +92,13 @@ def experiment(learner):
     result = learner.test(xtest)
     # probs = learner.probability(xtest)
     # print('Probability:\t', probs)
-    score = accuracy_score(result, ytest)
-    print('Accuracy Score:\t', score)
+
+    # Print the score of the trained classifier on the cross-validation set.
+    # For most models, this score should be the exact same. If they differ, check the classifier docs.
+    # https://stackoverflow.com/questions/40726899/difference-between-score-vs-accuracy-score-in-sklearn
+    print('=' * 15 + '[ SCORE ]' + '=' * 15)
+    print('Classifier Score: ', learner.score(xtest, ytest))
+    print('Accuracy Score:   ', accuracy_score(result, ytest))
 
     if args.search:
         print("Tuning model to search space. Hold on to your shorts!")
