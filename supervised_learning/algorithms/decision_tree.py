@@ -23,7 +23,6 @@ class DecisionTreeLearner(AbstractLearner):
         # https://scikit-learn.org/stable/auto_examples/tree/plot_cost_complexity_pruning.html
 
         # STATS BEFORE PRUNING
-
         path = self.dt_classifier.cost_complexity_pruning_path(x, y)
         ccp_alphas, impurities = path.ccp_alphas, path.impurities
         # Select one of the alphas according to the number of impurities in the nodes it relates to.
@@ -41,16 +40,38 @@ class DecisionTreeLearner(AbstractLearner):
         plt.title("Total Impurity vs effective alpha for training set")
         plt.tight_layout()
         plt.show()
+        return ccp_alphas, impurities
 
 
     def experiment(self, xtrain, xtest, ytrain, ytest):
         print('Score pre-pruning tree:', self.dt_classifier.score(xtest, ytest))
         print('Node count pre-pruning:', self.dt_classifier.tree_.node_count)
-        self.prune(xtrain, ytrain)
+        self.plot_learning_curve(xtrain, ytrain)
+        ccp_alphas, impurities = self.prune(xtrain, ytrain)
         self.train(xtrain, ytrain)
         print('Score post-pruning tree:', self.dt_classifier.score(xtest, ytest))
         print('Node count post-pruning:', self.dt_classifier.tree_.node_count)
+        self.plot_learning_curve(xtrain, ytrain)
 
+        # Let's see how the ccp alphas affect the score of trained classifiers.
+        print('Computing graph of how cost complexity pruning affects score')
+        trees = []
+        for ccp_alpha in ccp_alphas:
+            dt = tree.DecisionTreeClassifier(random_state=0, ccp_alpha=ccp_alpha)
+            dt.fit(xtrain, ytrain)
+            trees.append(dt)
+        print("Number of nodes in the last tree is: {} with ccp_alpha: {}".format(
+            trees[-1].tree_.node_count, ccp_alphas[-1]))
+        train_scores = [dt.score(xtrain, ytrain) for dt in trees]
+        test_scores = [dt.score(xtest, ytest) for dt in trees]
+        fig, ax = plt.subplots()
+        ax.set_xlabel("alpha")
+        ax.set_ylabel("accuracy")
+        ax.set_title("Accuracy vs alpha for training and testing sets")
+        ax.plot(ccp_alphas, train_scores, marker='o', label="train", drawstyle="steps-post")
+        ax.plot(ccp_alphas, test_scores, marker='o', label="test", drawstyle="steps-post")
+        ax.legend()
+        plt.show()
 
 
     # Define the parameter space to search with GridSearchCV
