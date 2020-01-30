@@ -105,6 +105,8 @@ def experiment(learner):
         result = learner.tune(xtrain, ytrain)
         print(result)
 
+    learner.experiment(xtrain, xtest, ytrain, ytest)
+
     plot_learning_curve(learner, xtrain, ytrain)
     plot_validation_curve(learner, xtrain, ytrain)
     # debug()

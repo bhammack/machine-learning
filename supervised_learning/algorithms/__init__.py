@@ -30,6 +30,10 @@ class AbstractLearner():
     def set_params(self, **params):
         return self.classifier().set_params(**params)
 
+    def experiment(self, xtrain, xtest, ytrain, ytest):
+        """Use a custom experiment defined by the learner."""
+        print('No experiment defined!')
+
     @abstractmethod
     def tune(self):
         """Defined by the learners. Learners must return the params."""
