@@ -21,19 +21,20 @@ class DecisionTreeLearner(AbstractLearner):
     def prune(self, x, y):
         """Prune a trained tree provided a cost-complexity parameter alpha."""
         # https://scikit-learn.org/stable/auto_examples/tree/plot_cost_complexity_pruning.html
-        
+
         # STATS BEFORE PRUNING
-        
+
         path = self.dt_classifier.cost_complexity_pruning_path(x, y)
         ccp_alphas, impurities = path.ccp_alphas, path.impurities
         # Select one of the alphas according to the number of impurities in the nodes it relates to.
         # alphas are in ascending order, so let's get the biggest one.
         # we can't take the biggest alpha because that is the trivial tree of only one node.
-        alpha = ccp_alphas[3]
+        # Select the alpha that will remove roughly half of the nodes in the tree.
+        alpha = ccp_alphas[len(ccp_alphas) // 2]
         # Re-fit the decision tree to the data set using the cost complexity alpha
         self.dt_classifier = tree.DecisionTreeClassifier(ccp_alpha=alpha)
         # self.train(x, y)  # retrain the model outside this class
-        
+
         plt.plot(ccp_alphas[:-1], impurities[:-1], marker='o', drawstyle="steps-post")
         plt.xlabel("effective alpha")
         plt.ylabel("total impurity of leaves")
@@ -43,12 +44,12 @@ class DecisionTreeLearner(AbstractLearner):
 
 
     def experiment(self, xtrain, xtest, ytrain, ytest):
-        print('Score before pruning tree:', self.dt_classifier.score(xtest, ytest))
-        print('# of nodes before pruning:', self.dt_classifier.tree_.node_count)
+        print('Score pre-pruning tree:', self.dt_classifier.score(xtest, ytest))
+        print('Node count pre-pruning:', self.dt_classifier.tree_.node_count)
         self.prune(xtrain, ytrain)
         self.train(xtrain, ytrain)
-        print('Score after pruning tree:', self.dt_classifier.score(xtest, ytest))
-        print('# of nodes after pruning:', self.dt_classifier.tree_.node_count)
+        print('Score post-pruning tree:', self.dt_classifier.score(xtest, ytest))
+        print('Node count post-pruning:', self.dt_classifier.tree_.node_count)
 
 
 
