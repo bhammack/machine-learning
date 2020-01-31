@@ -6,6 +6,7 @@ class BoostedTreeLearner(AbstractLearner):
     """test"""
     def __init__(self):
         self.bdt_classifier = AdaBoostClassifier()
+        # boosted trees are iterative
 
     def classifier(self):
         return self.bdt_classifier

@@ -6,7 +6,8 @@ class NeuralNetworkLearner(AbstractLearner):
     """test"""
     def __init__(self):
         # https://analyticsindiamag.com/a-beginners-guide-to-scikit-learns-mlpclassifier/
-        self.nn_classifier = MLPClassifier()
+        self.nn_classifier = MLPClassifier(learning_rate='adaptive')
+        # neural networks are iterative
 
     def classifier(self):
         return self.nn_classifier
@@ -22,5 +23,10 @@ class NeuralNetworkLearner(AbstractLearner):
         }
         return self._tune(params, x, y)
 
-    def get_validation_param(self):
-        return ('alpha', [0.00001, 0.0001, 0.001, 0.01, 0.1])
+    def experiment(self, xtrain, xtest, ytrain, ytest):
+        # max_iter is not the iterations of the model / learning rate, it is the upper bound.
+        # https://stackoverflow.com/questions/54024816/how-to-plot-learning-rate-vs-accuracy-sklearn
+        self.plot_learning_curve(xtrain, ytrain)
+        # self.plot_validation_curve(xtrain, ytrain, 'alpha', [0.00001, 0.0001, 0.001, 0.01, 0.1])
+        self.plot_validation_curve(xtrain, ytrain, 'learning_rate', [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10])
+        # self.plot_validation_curve(xtrain, ytrain, 'max_iter', np.arange(100, 500))

@@ -26,7 +26,6 @@ class SVMLearner(AbstractLearner):
         }
         return self._tune(params, x, y)
 
-    def get_validation_param(self):
-        # Scans the exponential magnitude space of C values...
-        return ('gamma', self.gamma_space)
-        # return ('max_depth', np.arange(1, 51))
+    def experiment(self, xtrain, xtest, ytrain, ytest):
+        self.plot_learning_curve(xtrain, ytrain)
+        self.plot_validation_curve(xtrain, ytrain, 'C', self.c_space)

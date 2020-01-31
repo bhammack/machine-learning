@@ -26,8 +26,8 @@ def get_data_set():
 def experiment(learner):
     """Run the experiment with the specified learner and data set."""
     start = time.time()
+    print('Running experiment on', type(learner.classifier()).__name__)
     xtrain, xtest, ytrain, ytest, x, y = get_data_set()
-    print('Learner is using a', type(learner.classifier()).__name__, 'classifier with params...')
     print(learner.get_params())
     learner.train(xtrain, ytrain)
     # print('Error:\t', learner.classifier().score(xtrain, ytrain))
@@ -55,35 +55,6 @@ def experiment(learner):
     end = time.time()
     print('Experiment duration: {:.2f} secs'.format(end - start))
 
-def dt():
-    """Run the decision tree experiment."""
-    print('Running the decision tree experiment...')
-    experiment(DecisionTreeLearner())
-
-
-def knn():
-    """Run the knn experiment."""
-    print('Running the k-nearest neighbors experiment...')
-    experiment(KNNLearner())
-
-
-def svm():
-    """Run the svm experiment."""
-    print('Running the support vector machine experiment...')
-    experiment(SVMLearner())
-
-
-def nn():
-    """Run the neural network experiment."""
-    print('Running the neural network experiment...')
-    experiment(NeuralNetworkLearner())
-
-
-def bdt():
-    """Run the boosting experiment."""
-    print('Running the boosted decision tree experiment...')
-    experiment(BoostedTreeLearner())
-
 
 if __name__ == '__main__':
 
@@ -99,19 +70,17 @@ if __name__ == '__main__':
 
     parser.add_argument('--search', action='store_true', help='Search for the best parameter set')
 
-
-
     args = parser.parse_args()
 
     if args.dt:
-        dt()
+        experiment(DecisionTreeLearner())
     if args.knn:
-        knn()
+        experiment(KNNLearner())
     if args.nn:
-        nn()
+        experiment(NeuralNetworkLearner())
     if args.svm:
-        svm()
+        experiment(SVMLearner())
     if args.bdt:
-        bdt()
+        experiment(BoostedTreeLearner())
     if len(sys.argv) == 1:
         parser.print_help()

@@ -5,6 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+'''
+['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'balanced_accuracy', 
+'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 
+'homogeneity_score', 'jaccard', 'jaccard_macro', 'jaccard_micro', 'jaccard_samples', 'jaccard_weighted', 'max_error', 
+'mutual_info_score', 'neg_brier_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_gamma_deviance', 'neg_mean_poisson_deviance', 
+'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'neg_root_mean_squared_error', 'normalized_mutual_info_score', 
+'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 
+'recall_samples', 'recall_weighted', 'roc_auc', 'roc_auc_ovo', 'roc_auc_ovo_weighted', 'roc_auc_ovr', 'roc_auc_ovr_weighted', 'v_measure_score']
+'''
 
 class AbstractLearner():
     """A really useful base class for wrapping and abstracing the implementations of classifiers
@@ -60,7 +69,7 @@ class AbstractLearner():
         """Defined by the learners. Return a tuple of the validation parameter name and range."""
         pass
 
-    def plot_learning_curve(self, x, y):
+    def plot_learning_curve(self, x, y, scoring='accuracy'):
         """Plot the learning curve, a function of accuracy over N, the size of the data set."""
         # Important note on overfitting!
         # https://stats.stackexchange.com/questions/283738/sklearn-learning-curve-example
@@ -70,6 +79,7 @@ class AbstractLearner():
             self.classifier(),
             x,
             y,
+            scoring=scoring,
             cv=5,  # number of folds in cross-validation / number of points on the plots
             n_jobs=-1,  # number of cores to use
             return_times=True)
@@ -82,8 +92,8 @@ class AbstractLearner():
         plt.plot(train_sizes, test_mean, color="navy", label="Cross-validation score")
         plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.2, color="darkorange")
         plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.2, color="navy")
-        plt.title("Learning Curve: " + type(self.classifier()).__name__)
-        plt.xlabel("Training Set Size"), plt.ylabel("Accuracy Score"), plt.legend(loc="best")
+        plt.title("Learning Curve: " + type(self).__name__)
+        plt.xlabel("Training Set Size"), plt.ylabel(scoring), plt.legend(loc="best")
         plt.tight_layout()
         plt.show()
 
@@ -92,7 +102,7 @@ class AbstractLearner():
         """Plot the validation curve.
         The validation curve plots the influence of a single hyperparameter
         on the training score and test score to determine if the model is over or underfitting."""
-        param_name, param_range = self.get_validation_param()
+        # param_name, param_range = self.get_validation_param()
         print('Computing validation curve...')
         train_scores, test_scores = validation_curve(
             self.classifier(),
@@ -105,7 +115,7 @@ class AbstractLearner():
         train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
         test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
 
-        plt.title("Validation Curve: " + type(self.classifier()).__name__)
+        plt.title("Validation Curve: " + type(self).__name__)
         plt.plot(param_range, train_mean, label="Training score", color="darkorange")
         plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
         plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, alpha=0.2, color="darkorange")
