@@ -11,3 +11,6 @@ class BoostedTreeLearner(AbstractLearner):
     def classifier(self):
         return self.bdt_classifier
 
+    def experiment(self, xtrain, xtest, ytrain, ytest):
+        # plot accuracy vs weak learner count
+        
