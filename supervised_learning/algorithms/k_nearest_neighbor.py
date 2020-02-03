@@ -4,7 +4,7 @@ from . import AbstractLearner
 
 class KNNLearner(AbstractLearner):
     def __init__(self):
-        self.knn_classifier = KNeighborsClassifier()
+        self.knn_classifier = KNeighborsClassifier(n_neighbors=10)
 
     def classifier(self):
         return self.knn_classifier
@@ -22,5 +22,5 @@ class KNNLearner(AbstractLearner):
 
     def experiment(self, xtrain, xtest, ytrain, ytest):
         self.plot_learning_curve(xtrain, ytrain)
-        self.plot_validation_curve(xtrain, ytrain, 'n_neighbors', np.arange(1, 51))
+        self.plot_validation_curve(xtrain, ytrain, 'n_neighbors', np.arange(1, 51), 'roc_auc')
     

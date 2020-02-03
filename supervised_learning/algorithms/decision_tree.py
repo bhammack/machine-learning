@@ -3,6 +3,7 @@ from sklearn import tree
 from subprocess import call
 import numpy as np
 import matplotlib.pyplot as plt
+from pdb import set_trace
 
 from . import AbstractLearner
 
@@ -12,7 +13,7 @@ from . import AbstractLearner
 class DecisionTreeLearner(AbstractLearner):
     """test"""
     def __init__(self):
-        self.dt_classifier = tree.DecisionTreeClassifier()
+        self.dt_classifier = tree.DecisionTreeClassifier(max_leaf_nodes=180, max_depth=7)
         # self.dt_classifier = tree.DecisionTreeClassifier(max_depth=5)
 
     def classifier(self): # pylint: disable=E0202
@@ -46,14 +47,23 @@ class DecisionTreeLearner(AbstractLearner):
     def experiment(self, xtrain, xtest, ytrain, ytest):
         print('Score pre-pruning tree:', self.dt_classifier.score(xtest, ytest))
         print('Node count pre-pruning:', self.dt_classifier.tree_.node_count)
+        # set_trace()
         self.plot_learning_curve(xtrain, ytrain)
         ccp_alphas, impurities = self.prune(xtrain, ytrain)
         self.train(xtrain, ytrain)
         print('Score post-pruning tree:', self.dt_classifier.score(xtest, ytest))
         print('Node count post-pruning:', self.dt_classifier.tree_.node_count)
         self.plot_learning_curve(xtrain, ytrain)
+        
+        # self.alpha_vs_accuracy(ccp_alphas, xtrain, xtest, ytrain, ytest)
+        # self.nodes_vs_accuracy(ccp_alphas, xtrain, xtest, ytrain, ytest)
+        # self.plot_validation_curve(xtrain, ytrain, 'max_leaf_nodes', np.arange(2, 51))
+        # self.plot_validation_curve(xtrain, ytrain, 'max_depth', np.arange(2, 21))
+        # print(self.tune(xtrain, ytrain))
 
-        # Let's see how the ccp alphas affect the score of trained classifiers.
+
+    def alpha_vs_accuracy(self, ccp_alphas, xtrain, xtest, ytrain, ytest):
+        """Let's see how the ccp alphas affect the score of trained classifiers."""
         print('Computing graph of how cost complexity pruning affects score')
         trees = []
         for ccp_alpha in ccp_alphas:
@@ -73,11 +83,34 @@ class DecisionTreeLearner(AbstractLearner):
         ax.legend()
         plt.show()
 
+    def nodes_vs_accuracy(self, ccp_alphas, xtrain, xtest, ytrain, ytest):
+        """Let's see how the number of nodes, thus ccp alpha affects the score of trained classifiers."""
+        print('Computing number of nodes affects score')
+        trees = []
+        num_nodes = []
+        for ccp_alpha in ccp_alphas:
+            dt = tree.DecisionTreeClassifier(random_state=0, ccp_alpha=ccp_alpha, max_leaf_nodes=500)
+            dt.fit(xtrain, ytrain)
+            num_nodes.append(dt.tree_.node_count)
+            trees.append(dt)
+        print("Number of nodes in the last tree is: {} with ccp_alpha: {}".format(
+            trees[-1].tree_.node_count, ccp_alphas[-1]))
+        train_scores = [dt.score(xtrain, ytrain) for dt in trees]
+        test_scores = [dt.score(xtest, ytest) for dt in trees]
+        fig, ax = plt.subplots()
+        ax.set_xlabel("nodes")
+        ax.set_ylabel("accuracy")
+        ax.set_title("Accuracy vs Tree Size")
+        ax.plot(num_nodes, test_scores, color="navy", label="Cross-validation score")
+        ax.plot(num_nodes, train_scores, color="darkorange", label="Training score")
+        ax.legend()
+        plt.show()
+
 
     # Define the parameter space to search with GridSearchCV
     def tune(self, x, y):
         params = {
-            "max_depth": np.arange(1, 51),
+            "max_depth": np.arange(1, 21),
             "max_leaf_nodes": np.arange(2, 100) # max leaf nodes must be greater than 1
         }
         return self._tune(params, x, y)

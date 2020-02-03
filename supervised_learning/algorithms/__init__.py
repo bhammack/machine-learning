@@ -30,14 +30,18 @@ class AbstractLearner():
         start = time.time()
         result = self.classifier().fit(x, y)
         end = time.time()
-        print('\tfitting data took: {:.2f} secs'.format(end - start))
+        print('\tfitting data took: {:.5f} secs'.format(end - start))
         return result
 
     def test(self, x):
         return self.classifier().predict(x)
 
     def score(self, x, y):
-        return self.classifier().score(x, y)
+        start = time.time()
+        result = self.classifier().score(x, y)
+        end = time.time()
+        print('\tscoring data took: {:.5f} secs'.format(end - start))
+        return result
 
     def probability(self, x):
         return self.classifier().predict_proba(x)
@@ -60,7 +64,7 @@ class AbstractLearner():
     def _tune(self, params, x, y):
         """Search the parameter space for the classifier for the best tuned hyperparameters."""
         # https://www.pyimagesearch.com/2016/08/15/how-to-tune-hyperparameters-with-python-and-scikit-learn/
-        grid = GridSearchCV(self.classifier(), params, verbose=1)
+        grid = GridSearchCV(self.classifier(), params, verbose=1, n_jobs=5)
         grid.fit(x, y)
         return grid.best_params_
 
@@ -98,7 +102,7 @@ class AbstractLearner():
         plt.show()
 
 
-    def plot_validation_curve(self, x, y, param_name=None, param_range=None):
+    def plot_validation_curve(self, x, y, param_name=None, param_range=None, scoring='accuracy'):
         """Plot the validation curve.
         The validation curve plots the influence of a single hyperparameter
         on the training score and test score to determine if the model is over or underfitting."""
@@ -110,7 +114,7 @@ class AbstractLearner():
             y,
             param_name=param_name,
             param_range=param_range,
-            scoring="accuracy",
+            scoring=scoring,
             n_jobs=-1)
         train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
         test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
@@ -120,6 +124,6 @@ class AbstractLearner():
         plt.plot(param_range, test_mean, label="Cross-validation score", color="navy")
         plt.fill_between(param_range, train_mean - train_std, train_mean + train_std, alpha=0.2, color="darkorange")
         plt.fill_between(param_range, test_mean - test_std, test_mean + test_std, alpha=0.2, color="navy")
-        plt.xlabel('Parameter: ' + param_name), plt.ylabel("Score"), plt.legend(loc="best")
+        plt.xlabel('Parameter: ' + param_name), plt.ylabel(scoring), plt.legend(loc="best")
         plt.tight_layout()
         plt.show()

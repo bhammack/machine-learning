@@ -1,6 +1,9 @@
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from pdb import set_trace
 
 def encode(df, cols_to_encode):
     labels = {} # label index mapping for future reference
@@ -10,6 +13,17 @@ def encode(df, cols_to_encode):
         labels[col] = le.classes_
         df[col] = le.transform(df[col])
     return df, labels
+
+def onehotencode(df, cols_to_encode):
+    set_trace()
+    
+    one = OneHotEncoder(categories=cols_to_encode)
+    ct = ColumnTransformer()
+
+    result = one.fit_transform(df)
+    
+    set_trace()
+    return df, None
 
 
 def split(x, y, test_size):
