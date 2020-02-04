@@ -31,7 +31,7 @@ def experiment(learner):
     print(learner.get_params())
     learner.train(xtrain, ytrain)
     # print('Error:\t', learner.classifier().score(xtrain, ytrain))
-    result = learner.test(xtest)
+    # result = learner.test(xtest)
     # probs = learner.probability(xtest)
     # print('Probability:\t', probs)
 
@@ -40,7 +40,6 @@ def experiment(learner):
     # https://stackoverflow.com/questions/40726899/difference-between-score-vs-accuracy-score-in-sklearn
     print('=' * 15 + '[ SCORE ]' + '=' * 15)
     print('Classifier Score: ', learner.score(xtest, ytest))
-    print('Accuracy Score:   ', accuracy_score(result, ytest))
 
     if args.search:
         print("Tuning model to search space. Hold on to your shorts!")
