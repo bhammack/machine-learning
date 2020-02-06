@@ -8,8 +8,8 @@ from pdb import set_trace
 class SVMLearner(AbstractLearner):
     """test"""
     def __init__(self):
-        self.svm_classifier = svm.SVC()
-        n = 4
+        self.svm_classifier = svm.SVC(kernel='linear')
+        n = 2
         self.c_space = [10 ** x for x in range(-1 * n, n + 1)]
         self.kernels = ['rbf', 'linear', 'sigmoid', 'poly']
         self.kernel_colors = {
@@ -30,8 +30,8 @@ class SVMLearner(AbstractLearner):
 
     def tune(self, x, y):
         params = {
-            "C": self.c_space,
-            "kernel": self.kernels
+           # "C": self.c_space,
+            "kernel": ['linear', 'sigmoid']
         }
         print('C space:', self.c_space)
         return self._tune(params, x, y)
@@ -98,4 +98,5 @@ class SVMLearner(AbstractLearner):
     def experiment(self, xtrain, xtest, ytrain, ytest):
         # self.plot_learning_curve(xtrain, ytrain)
         # self.plot_kernel_learning(xtrain, xtest, ytrain, ytest)
-        self.plot_c_validation(xtrain, ytrain)
+        # self.plot_c_validation(xtrain, ytrain)
+        pass

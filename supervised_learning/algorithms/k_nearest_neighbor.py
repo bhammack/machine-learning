@@ -21,6 +21,7 @@ class KNNLearner(AbstractLearner):
         return self._tune(params, x, y)
 
     def experiment(self, xtrain, xtest, ytrain, ytest):
-        self.plot_learning_curve(xtrain, ytrain)
-        self.plot_validation_curve(xtrain, ytrain, 'n_neighbors', np.arange(1, 51), 'roc_auc')
+        pass
+        # self.plot_learning_curve(xtrain, ytrain)
+        # self.plot_validation_curve(xtrain, ytrain, 'n_neighbors', np.arange(1, 51), 'roc_auc')
     

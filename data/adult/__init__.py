@@ -18,7 +18,7 @@ df, labels = encode(df, [14])
 # set_trace()
 
 # Reduce the size of the data using a random sample for performance reasons
-df = df.sample(4096)
+# df = df.sample(4096)
 
 y = df.pop(14)
 x = df
