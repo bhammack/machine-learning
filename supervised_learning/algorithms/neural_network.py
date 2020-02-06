@@ -10,11 +10,11 @@ class NeuralNetworkLearner(AbstractLearner):
         # https://analyticsindiamag.com/a-beginners-guide-to-scikit-learns-mlpclassifier/
         self.nn_classifier = MLPClassifier(n_iter_no_change=50, learning_rate='constant', hidden_layer_sizes=(100, 100), early_stopping=True, activation='logistic')
         # neural networks are iterative
-        # digits: 
+        # digits:
         # {'activation': 'relu', 'hidden_layer_sizes': (100, 100)}
         # {'activation': 'tanh', 'hidden_layer_sizes': (50, 50)}
         # {'activation': 'relu', 'hidden_layer_sizes': (100, 100)}
-        # adult: 
+        # adult:
         # {'activation': 'logistic', 'hidden_layer_sizes': 100}
         # {'activation': 'tanh', 'hidden_layer_sizes': (50, 50, 50)}
         # {'activation': 'logistic', 'hidden_layer_sizes': (100, 100)}
