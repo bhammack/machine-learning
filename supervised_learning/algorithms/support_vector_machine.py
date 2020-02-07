@@ -30,8 +30,8 @@ class SVMLearner(AbstractLearner):
 
     def tune(self, x, y):
         params = {
-           # "C": self.c_space,
-            "kernel": ['linear', 'sigmoid']
+           "C": self.c_space
+            # "kernel": ['linear', 'sigmoid']
         }
         print('C space:', self.c_space)
         return self._tune(params, x, y)
