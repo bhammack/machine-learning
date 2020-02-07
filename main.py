@@ -18,8 +18,10 @@ from sklearn.metrics import plot_roc_curve
 
 def get_data_set():
     if args.adult:
+        print('USING ADULTS DATA SET!')
         return adult.x_train, adult.x_test, adult.y_train, adult.y_test, adult.x, adult.y
     elif args.digits:
+        print('USING DIGITS DATA SET!')
         return digits.x_train, digits.x_test, digits.y_train, digits.y_test, digits.x, digits.y
 
 
