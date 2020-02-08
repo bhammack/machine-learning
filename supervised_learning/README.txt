@@ -2,6 +2,8 @@
 ## Supervised Learning Analysis
 =====
 
+Project code can be found here: https://github.com/bhammack/machine-learning
+
 From the root of this repository, run the main.py script with arguments:
 ex: `python main.py --digits --svm` or `python main.py --adult --svm`
 One data set must be selected, either `--adult` or `--digits` and one or more learners `--svm --bdt --nn`
