@@ -2,6 +2,9 @@ import sys
 import os
 import time
 
+# import numpy as np
+# import matplotlib.pyplot as plt
+
 import java.io.FileReader as FileReader
 import java.io.File as File
 import java.lang.String as String
@@ -43,9 +46,20 @@ Commandline parameter(s):
    none
 """
 
-N=80
+N = 100
 fill = [2] * N
 ranges = array('i', fill)
+
+
+"""
+Q: I am trying to understand what the count ones optimization function is doing.
+From the test class in ABAGAIL, I see that an array is created and filled up with all int=2.
+I think i understand the concept of counting all of the 1s in the vector,
+but I do not see how the array of all 2s turns into an array of 1s and 0s?
+
+If you dig through the classes that uses the ranges variable, it will become clear.
+The 2 specifies how many different values are possible at any point in the vector (0 and 1).
+"""
 
 ef = CountOnesEvaluationFunction()
 odd = DiscreteUniformDistribution(ranges)
@@ -57,15 +71,45 @@ hcp = GenericHillClimbingProblem(ef, odd, nf)
 gap = GenericGeneticAlgorithmProblem(ef, odd, mf, cf)
 pop = GenericProbabilisticOptimizationProblem(ef, odd, df)
 
-rhc = RandomizedHillClimbing(hcp)
-fit = FixedIterationTrainer(rhc, 200)
-fit.train()
-print "RHC: " + str(ef.value(rhc.getOptimal()))
 
-sa = SimulatedAnnealing(100, .95, hcp)
-fit = FixedIterationTrainer(sa, 200)
-fit.train()
-print "SA: " + str(ef.value(sa.getOptimal()))
+
+
+
+rhc = RandomizedHillClimbing(hcp)
+print "Random Hill Climb"
+iters_list = [10, 25, 50, 100, 200, 300, 400, 500]
+for iters in iters_list:
+   fit = FixedIterationTrainer(rhc, iters)
+   start = time.time()
+   fit.train()
+   duration = time.time() - start
+   print "Iterations: " + str(iters) + ", Fitness: " + str(ef.value(rhc.getOptimal())), ", Duration: " + str(duration)
+
+print "Simulated Annealing"
+for iters in iters_list:
+   # Initial temperature of 100, with a cooling factor of .95 every iteration.
+   # Thus the temperature will be 100 for the first iteration, 95 for the second, 90.25, 87.65...
+   sa = SimulatedAnnealing(100, .95, hcp)
+   fit = FixedIterationTrainer(sa, iters)
+   start = time.time()
+   fit.train()
+   duration = time.time() - start
+   print "Iterations: " + str(iters) + ", Fitness: " + str(ef.value(sa.getOptimal())), ", Duration: " + str(duration)
+
+print "Simulated Annealing - Temperatures"
+temps = [100, 90, 75, 50, 25, 10]
+# for temp in temps:
+# temp = 25
+cooling_rate = 0.95
+for temp in temps:
+   for iters in iters_list:
+      sa = SimulatedAnnealing(temp, cooling_rate, hcp)
+      fit = FixedIterationTrainer(sa, iters)
+      start = time.time()
+      fit.train()
+      duration = time.time() - start
+      print "Iters: " + str(iters) + ", Temp: " + str(temp) + ", Fitness: " + str(ef.value(sa.getOptimal())), ", Duration: " + str(duration)
+
 
 ga = StandardGeneticAlgorithm(20, 20, 0, gap)
 fit = FixedIterationTrainer(ga, 300)
