@@ -2,6 +2,8 @@ import sys
 import os
 import time
 
+sys.path.append('../ABAGAIL.jar')
+
 import java.io.FileReader as FileReader
 import java.io.File as File
 import java.lang.String as String
@@ -42,8 +44,8 @@ Commandline parameter(s):
    none
 """
 
-N=200
-T=N/5
+N = 200
+T = N / 5
 fill = [2] * N
 ranges = array('i', fill)
 
@@ -57,22 +59,40 @@ hcp = GenericHillClimbingProblem(ef, odd, nf)
 gap = GenericGeneticAlgorithmProblem(ef, odd, mf, cf)
 pop = GenericProbabilisticOptimizationProblem(ef, odd, df)
 
+iters_list = [1000, 5000, 10000, 25000, 50000, 100000, 200000]
+
+print "Random Hill Climbing"
 rhc = RandomizedHillClimbing(hcp)
-fit = FixedIterationTrainer(rhc, 200000)
-fit.train()
-print "RHC: " + str(ef.value(rhc.getOptimal()))
+for iters in iters_list:
+   fit = FixedIterationTrainer(rhc, iters)
+   start = time.time()
+   fit.train()
+   dur = time.time() - start
+   print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(rhc.getOptimal())) + ", Dur: " + str(dur)
 
+print "Simulated Annealing"
 sa = SimulatedAnnealing(1E11, .95, hcp)
-fit = FixedIterationTrainer(sa, 200000)
-fit.train()
-print "SA: " + str(ef.value(sa.getOptimal()))
+for iters in iters_list:
+   fit = FixedIterationTrainer(sa, iters)
+   start = time.time()
+   fit.train()
+   dur = time.time() - start
+   print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(sa.getOptimal())) + ", Dur: " + str(dur)
 
+print "Genetic Algorithm"
 ga = StandardGeneticAlgorithm(200, 100, 10, gap)
-fit = FixedIterationTrainer(ga, 1000)
-fit.train()
-print "GA: " + str(ef.value(ga.getOptimal()))
+for iters in iters_list:
+   fit = FixedIterationTrainer(ga, iters) # 1000 iters
+   start = time.time()
+   fit.train()
+   dur = time.time() - start
+   print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(ga.getOptimal())) + ", Dur: " + str(dur)
 
+print "MIMIC"
 mimic = MIMIC(200, 20, pop)
-fit = FixedIterationTrainer(mimic, 1000)
-fit.train()
-print "MIMIC: " + str(ef.value(mimic.getOptimal()))
+for iters in iters_list:
+   fit = FixedIterationTrainer(mimic, 1000) # 1000 iters
+   start = time.time()
+   fit.train()
+   dur = time.time() - start
+   print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(mimic.getOptimal())) + ", Dur: " + str(dur)

@@ -113,12 +113,17 @@ print "Standard Genetic Algorithm"
 for iters in iters_list:
    # Population of size 20, of which 20 will mate and 0 will mutate.
    ga = StandardGeneticAlgorithm(200, 200, 0, gap)
-   fit = FixedIterationTrainer(ga, 300)
+   fit = FixedIterationTrainer(ga, iters)
+   start = time.time()
    fit.train()
-   print "Iters: " + str(iters) + ", Fitness " + str(ef.value(ga.getOptimal()))
+   duration = time.time() - start
+   print "Iters: " + str(iters) + ", Fitness " + str(ef.value(ga.getOptimal())) + ", Dur: " + str(duration)
 
 print "MIMIC Algorithm"
-mimic = MIMIC(50, 10, pop)
-fit = FixedIterationTrainer(mimic, 100)
-fit.train()
-print "MIMIC: " + str(ef.value(mimic.getOptimal()))
+for iters in iters_list:
+   mimic = MIMIC(50, 10, pop)
+   fit = FixedIterationTrainer(mimic, iters)
+   start = time.time()
+   fit.train()
+   duration = time.time() - start
+   print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(mimic.getOptimal())) + ", Dur: " + str(duration)
