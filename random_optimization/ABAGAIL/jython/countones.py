@@ -2,8 +2,7 @@ import sys
 import os
 import time
 
-# import numpy as np
-# import matplotlib.pyplot as plt
+sys.path.append('../ABAGAIL.jar')
 
 import java.io.FileReader as FileReader
 import java.io.File as File
@@ -110,12 +109,15 @@ for temp in temps:
       duration = time.time() - start
       print "Iters: " + str(iters) + ", Temp: " + str(temp) + ", Fitness: " + str(ef.value(sa.getOptimal())), ", Duration: " + str(duration)
 
+print "Standard Genetic Algorithm"
+for iters in iters_list:
+   # Population of size 20, of which 20 will mate and 0 will mutate.
+   ga = StandardGeneticAlgorithm(200, 200, 0, gap)
+   fit = FixedIterationTrainer(ga, 300)
+   fit.train()
+   print "Iters: " + str(iters) + ", Fitness " + str(ef.value(ga.getOptimal()))
 
-ga = StandardGeneticAlgorithm(20, 20, 0, gap)
-fit = FixedIterationTrainer(ga, 300)
-fit.train()
-print "GA: " + str(ef.value(ga.getOptimal()))
-
+print "MIMIC Algorithm"
 mimic = MIMIC(50, 10, pop)
 fit = FixedIterationTrainer(mimic, 100)
 fit.train()
