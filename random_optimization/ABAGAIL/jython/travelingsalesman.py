@@ -1,10 +1,12 @@
 # traveling salesman algorithm implementation in jython
 # This also prints the index of the points of the shortest route.
-# To make a plot of the route, write the points at these indexes 
+# To make a plot of the route, write the points at these indexes
 # to a file and plot them in your favorite tool.
 import sys
 import os
 import time
+
+sys.path.append('../ABAGAIL.jar')
 
 import java.io.FileReader as FileReader
 import java.io.File as File
@@ -73,57 +75,93 @@ cf = TravelingSalesmanCrossOver(ef)
 hcp = GenericHillClimbingProblem(ef, odd, nf)
 gap = GenericGeneticAlgorithmProblem(ef, odd, mf, cf)
 
+iters_list = [100, 500, 1000, 2500, 5000, 7500, 10000, 20000]
+
+print "Random Hill Climb"
 rhc = RandomizedHillClimbing(hcp)
-fit = FixedIterationTrainer(rhc, 200000)
-fit.train()
-print "RHC Inverse of Distance: " + str(ef.value(rhc.getOptimal()))
-print "Route:"
-path = []
-for x in range(0,N):
-    path.append(rhc.getOptimal().getDiscrete(x))
-print path
-
-sa = SimulatedAnnealing(1E12, .999, hcp)
-fit = FixedIterationTrainer(sa, 200000)
-fit.train()
-print "SA Inverse of Distance: " + str(ef.value(sa.getOptimal()))
-print "Route:"
-path = []
-for x in range(0,N):
-    path.append(sa.getOptimal().getDiscrete(x))
-print path
+for iters in iters_list:
+    fit = FixedIterationTrainer(rhc, iters)
+    start = time.time()
+    fit.train()
+    dur = time.time() - start
+    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(rhc.getOptimal())) + ", Dur: " + str(dur)
+# print "Route:"
+# path = []
+# for x in range(0,N):
+#     path.append(rhc.getOptimal().getDiscrete(x))
+# print path
 
 
-ga = StandardGeneticAlgorithm(2000, 1500, 250, gap)
-fit = FixedIterationTrainer(ga, 1000)
-fit.train()
-print "GA Inverse of Distance: " + str(ef.value(ga.getOptimal()))
-print "Route:"
-path = []
-for x in range(0,N):
-    path.append(ga.getOptimal().getDiscrete(x))
-print path
+
+print "Simulated Annealing"
+# 1e13, 0.8, 1e12 0.85, ... dang
+temp = 1E13
+cooling_rate = 0.90
+sa = SimulatedAnnealing(temp, cooling_rate, hcp)
+for iters in iters_list:
+    fit = FixedIterationTrainer(sa, iters)
+    start = time.time()
+    fit.train()
+    dur = time.time() - start
+    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(sa.getOptimal())) + ", Dur: " + str(dur)
+# print "Route:"
+# path = []
+# for x in range(0,N):
+#     path.append(sa.getOptimal().getDiscrete(x))
+# print path
+
+
+
+# print "Genetic Algorithm"
+# # 2000, 1500, 250 gives good results
+# # 200, 150, 25
+# ga = StandardGeneticAlgorithm(4000, 2500, 550, gap)
+# for iters in iters_list:
+#     fit = FixedIterationTrainer(ga, iters)
+#     start = time.time()
+#     fit.train()
+#     dur = time.time() - start
+#     print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(ga.getOptimal())) + ", Dur: " + str(dur)
+
+
+# print "Route:"
+# path = []
+# for x in range(0,N):
+#     path.append(ga.getOptimal().getDiscrete(x))
+# print path
+
 
 
 # for mimic we use a sort encoding
-ef = TravelingSalesmanSortEvaluationFunction(points);
+ef = TravelingSalesmanSortEvaluationFunction(points)
 fill = [N] * N
 ranges = array('i', fill)
-odd = DiscreteUniformDistribution(ranges);
-df = DiscreteDependencyTree(.1, ranges); 
-pop = GenericProbabilisticOptimizationProblem(ef, odd, df);
+odd = DiscreteUniformDistribution(ranges)
+df = DiscreteDependencyTree(0.1, ranges)
+pop = GenericProbabilisticOptimizationProblem(ef, odd, df)
 
-mimic = MIMIC(500, 100, pop)
-fit = FixedIterationTrainer(mimic, 1000)
-fit.train()
-print "MIMIC Inverse of Distance: " + str(ef.value(mimic.getOptimal()))
-print "Route:"
-path = []
-optimal = mimic.getOptimal()
-fill = [0] * optimal.size()
-ddata = array('d', fill)
-for i in range(0,len(ddata)):
-    ddata[i] = optimal.getContinuous(i)
-order = ABAGAILArrays.indices(optimal.size())
-ABAGAILArrays.quicksort(ddata, order)
-print order
+
+
+print "MIMIC Algorithm"
+# 250, 10? 500, 100?
+iters = 500
+for samples in [100, 150, 200, 500, 750, 1000]:
+    mimic = MIMIC(samples, 10, pop)
+    # for iters in iters_list:
+    fit = FixedIterationTrainer(mimic, iters)
+    start = time.time()
+    fit.train()
+    dur = time.time() - start
+    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(mimic.getOptimal())) + ", Dur: " + str(dur)
+
+
+# print "Route:"
+# path = []
+# optimal = mimic.getOptimal()
+# fill = [0] * optimal.size()
+# ddata = array('d', fill)
+# for i in range(0,len(ddata)):
+#     ddata[i] = optimal.getContinuous(i)
+# order = ABAGAILArrays.indices(optimal.size())
+# ABAGAILArrays.quicksort(ddata, order)
+# print order
