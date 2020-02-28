@@ -82,7 +82,7 @@ for iters in iters_list:
    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(sa.getOptimal())) + ", Dur: " + str(dur)
 
 print "Genetic Algorithm"
-ga = StandardGeneticAlgorithm(200, 175, 20, gap)
+ga = StandardGeneticAlgorithm(2 * N, 300, 100, gap)
 for iters in iters_list:
    fit = FixedIterationTrainer(ga, iters)
    start = time.time()
@@ -91,7 +91,9 @@ for iters in iters_list:
    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(ga.getOptimal())) + ", Dur: " + str(dur)
 
 print "MIMIC"
-mimic = MIMIC(250, 20, pop)
+# the number of samples to take each iteration
+# The number of samples to keep
+mimic = MIMIC(250, 25, pop)
 for iters in iters_list:
    fit = FixedIterationTrainer(mimic, iters)
    start = time.time()
