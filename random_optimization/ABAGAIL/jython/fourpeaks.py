@@ -59,7 +59,7 @@ hcp = GenericHillClimbingProblem(ef, odd, nf)
 gap = GenericGeneticAlgorithmProblem(ef, odd, mf, cf)
 pop = GenericProbabilisticOptimizationProblem(ef, odd, df)
 
-iters_list = [1000, 5000, 10000, 25000, 50000, 100000, 200000]
+iters_list = [100, 500, 1000, 2500, 5000, 7500, 10000, 20000]
 
 print "Random Hill Climbing"
 rhc = RandomizedHillClimbing(hcp)
@@ -71,7 +71,9 @@ for iters in iters_list:
    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(rhc.getOptimal())) + ", Dur: " + str(dur)
 
 print "Simulated Annealing"
-sa = SimulatedAnnealing(1E11, .95, hcp)
+temp = 100000
+cooling_rate = 0.85
+sa = SimulatedAnnealing(temp, 0.85, hcp)
 for iters in iters_list:
    fit = FixedIterationTrainer(sa, iters)
    start = time.time()
@@ -80,18 +82,18 @@ for iters in iters_list:
    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(sa.getOptimal())) + ", Dur: " + str(dur)
 
 print "Genetic Algorithm"
-ga = StandardGeneticAlgorithm(200, 100, 10, gap)
+ga = StandardGeneticAlgorithm(200, 175, 20, gap)
 for iters in iters_list:
-   fit = FixedIterationTrainer(ga, iters) # 1000 iters
+   fit = FixedIterationTrainer(ga, iters)
    start = time.time()
    fit.train()
    dur = time.time() - start
    print "Iters: " + str(iters) + ", Fitness: " + str(ef.value(ga.getOptimal())) + ", Dur: " + str(dur)
 
 print "MIMIC"
-mimic = MIMIC(200, 20, pop)
+mimic = MIMIC(250, 20, pop)
 for iters in iters_list:
-   fit = FixedIterationTrainer(mimic, 1000) # 1000 iters
+   fit = FixedIterationTrainer(mimic, iters)
    start = time.time()
    fit.train()
    dur = time.time() - start
