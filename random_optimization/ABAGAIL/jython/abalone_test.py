@@ -137,18 +137,19 @@ def main():
     networks = []  # BackPropagationNetwork
     nnop = []  # NeuralNetworkOptimizationProblem
     oa = []  # OptimizationAlgorithm
-    # oa_names = ["RHC", "SA", "GA"]
-    oa_names = ["RHC", "SA", "GA"]
+    # oa_names = ["RHC", "SA"]
+    oa_names = ["GA"]
     results = ""
 
     for name in oa_names:
         classification_network = factory.createClassificationNetwork([INPUT_LAYER, HIDDEN_LAYER, HIDDEN_LAYER, HIDDEN_LAYER, OUTPUT_LAYER])
         networks.append(classification_network)
+		# measure of error for this neural network is sum of squares error
         nnop.append(NeuralNetworkOptimizationProblem(data_set, classification_network, measure))
 
-    oa.append(RandomizedHillClimbing(nnop[0]))
-    oa.append(SimulatedAnnealing(1E13, .95, nnop[1]))
-    oa.append(StandardGeneticAlgorithm(200, 100, 10, nnop[2]))
+    # oa.append(RandomizedHillClimbing(nnop[0]))
+    # oa.append(SimulatedAnnealing(1E13, .95, nnop[1]))
+    oa.append(StandardGeneticAlgorithm(2000, 1800, 50, nnop[0]))
 
     for i, name in enumerate(oa_names):
         start = time.time()
