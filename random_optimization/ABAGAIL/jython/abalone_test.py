@@ -33,11 +33,32 @@ TEST_FILE = os.path.join(".", "optdigits.tes")
 
 # INPUT_LAYER = 7
 INPUT_LAYER = 64
-HIDDEN_LAYER = 5
+HIDDEN_LAYER = 16
 OUTPUT_LAYER = 10
 # OUTPUT_LAYER = 1
-TRAINING_ITERATIONS = 1000
+TRAINING_ITERATIONS = 5000
 
+
+def get_test_instances():
+    """Read the optdigits test CSV data into a list of instances."""
+    instances = []
+
+    # Read in the abalone.txt CSV file
+    with open(TEST_FILE, "r") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            # Creates an instance using a float of every value in the row except the label
+            # instance = Instance([float(value) for value in row[:-1]])
+            # instance.setLabel(Instance(0 if float(row[-1]) < 15 else 1))
+            instance = Instance([float(value) for value in row[:-1]])
+            digitclass = int(row[-1])
+            classes = [0] * 10 # 10 classes
+            classes[digitclass] = 1.0
+            # Set the ith index to 1 for whatever the class is...
+            instance.setLabel(Instance(classes))
+            instances.append(instance)
+    # print instances
+    return instances
 
 def initialize_instances():
     """Read the optdigits CSV data into a list of instances."""
@@ -92,7 +113,6 @@ def train(oa, network, oaName, instances, measure):
             example = Instance(network.getOutputValues())
             example.setLabel(Instance(network.getOutputValues()))
             # output_values = network.getOutputValues() # this should be a list of activation values...
-
             # example = Instance(network.getOutputValues())
             # example = Instance(output_values, Instance(output_values.get(0)))
             # example = Instance(output_values, output)
@@ -109,6 +129,7 @@ def train(oa, network, oaName, instances, measure):
 def main():
     """Run algorithms on the abalone dataset."""
     instances = initialize_instances()
+    test_instances = get_test_instances()
     factory = BackPropagationNetworkFactory()
     measure = SumOfSquaresError()
     data_set = DataSet(instances)
@@ -116,8 +137,8 @@ def main():
     networks = []  # BackPropagationNetwork
     nnop = []  # NeuralNetworkOptimizationProblem
     oa = []  # OptimizationAlgorithm
+    # oa_names = ["RHC", "SA", "GA"]
     oa_names = ["RHC", "SA", "GA"]
-    oa_names = ["RHC", "SA"]
     results = ""
 
     for name in oa_names:
@@ -126,8 +147,8 @@ def main():
         nnop.append(NeuralNetworkOptimizationProblem(data_set, classification_network, measure))
 
     oa.append(RandomizedHillClimbing(nnop[0]))
-    oa.append(SimulatedAnnealing(1E11, .95, nnop[1]))
-    # oa.append(StandardGeneticAlgorithm(200, 100, 10, nnop[2]))
+    oa.append(SimulatedAnnealing(1E13, .95, nnop[1]))
+    oa.append(StandardGeneticAlgorithm(200, 100, 10, nnop[2]))
 
     for i, name in enumerate(oa_names):
         start = time.time()
@@ -149,11 +170,6 @@ def main():
             actualindex = instance.getLabel().getData().argMax()
             predictedindex = networks[i].getOutputValues().argMax()
 
-            print "actual", instance.getLabel()
-            print "predicted", networks[i].getOutputValues()
-            print "actualindex", actualindex
-            print "predictedindex", predictedindex
-
             if actualindex == predictedindex:
                 correct += 1
             else:
@@ -162,12 +178,33 @@ def main():
         end = time.time()
         testing_time = end - start
 
+        results += "\nTraining Data -----"
         results += "\nResults for %s: \nCorrectly classified %d instances." % (name, correct)
         results += "\nIncorrectly classified %d instances.\nPercent correctly classified: %0.03f%%" % (incorrect, float(correct)/(correct+incorrect)*100.0)
         results += "\nTraining time: %0.03f seconds" % (training_time,)
         results += "\nTesting time: %0.03f seconds\n" % (testing_time,)
 
+        # Cross validate the data
+        
+        results += "\Cross-validation data -----"
+        correct = 0
+        incorrect = 0
+        for instance in test_instances:
+            networks[i].setInputValues(instance.getData())
+            networks[i].run()
+            actualindex = instance.getLabel().getData().argMax()
+            predictedindex = networks[i].getOutputValues().argMax()
+            if actualindex == predictedindex:
+                correct += 1
+            else:
+                incorrect += 1
+        results += "\nResults for %s: \nCorrectly classified %d instances." % (name, correct)
+        results += "\nIncorrectly classified %d instances.\nPercent correctly classified: %0.03f%%" % (incorrect, float(correct)/(correct+incorrect)*100.0)
+
+
     print results
+
+
 
 
 if __name__ == "__main__":
