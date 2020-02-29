@@ -137,16 +137,22 @@ ef = TravelingSalesmanSortEvaluationFunction(points)
 fill = [N] * N
 ranges = array('i', fill)
 odd = DiscreteUniformDistribution(ranges)
-df = DiscreteDependencyTree(0.1, ranges)
-pop = GenericProbabilisticOptimizationProblem(ef, odd, df)
+
 
 
 
 print "MIMIC Algorithm"
 # 250, 10? 500, 100?
-iters = 500
-for samples in [100, 150, 200, 500, 750, 1000]:
-    mimic = MIMIC(samples, 10, pop)
+iters = 2000
+samples = 200
+to_keep = 20
+m = 0.3
+# for samples in [100, 150, 200, 500, 750, 1000]:
+# if True:
+for iters in iters_list:
+    df = DiscreteDependencyTree(m, ranges)
+    pop = GenericProbabilisticOptimizationProblem(ef, odd, df)
+    mimic = MIMIC(samples, to_keep, pop)
     # for iters in iters_list:
     fit = FixedIterationTrainer(mimic, iters)
     start = time.time()
