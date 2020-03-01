@@ -1,3 +1,9 @@
+=====
+## Random Optimization Analysis
+=====
+
+Project code can be found here: https://github.com/bhammack/machine-learning/tree/master/random_optimization
+
 Running the code requires jython. Once the ABAGAIL.jar library has been built,
 change directories into random_optimization/ABAGAIL/jython and run the python scripts
 ```jython countones.py```
