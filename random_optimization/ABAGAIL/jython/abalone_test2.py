@@ -5,6 +5,7 @@ or more than 15 rings.
 
 Based on AbaloneTest.java by Hannah Lau
 """
+
 from __future__ import with_statement
 
 import os
@@ -24,69 +25,37 @@ import opt.SimulatedAnnealing as SimulatedAnnealing
 import opt.ga.StandardGeneticAlgorithm as StandardGeneticAlgorithm
 
 
-INPUT_FILE = os.path.join("..", "src", "opt", "test", "abalone.txt")
+TRAIN_FILE = os.path.join(".", "optdigits_bin.tra")
+TEST_FILE = os.path.join(".", "optdigits_bin.tes")
 
 
-# TRAIN_FILE = os.path.join(".", "optdigits.tra")
-TRAIN_FILE = os.path.join(".", "optdigits_three.tra")
-TEST_FILE = os.path.join(".", "optdigits.tes")
-
-
-
-# INPUT_LAYER = 7
 INPUT_LAYER = 64
 HIDDEN_LAYER = 16
-OUTPUT_LAYER = 3
-# OUTPUT_LAYER = 1
-TRAINING_ITERATIONS = 1000
+OUTPUT_LAYER = 1
+TRAINING_ITERATIONS = 20
 
 
 def get_test_instances():
     """Read the optdigits test CSV data into a list of instances."""
     instances = []
-
-    # Read in the abalone.txt CSV file
     with open(TEST_FILE, "r") as f:
         reader = csv.reader(f)
         for row in reader:
-            # Creates an instance using a float of every value in the row except the label
-            # instance = Instance([float(value) for value in row[:-1]])
-            # instance.setLabel(Instance(0 if float(row[-1]) < 15 else 1))
             instance = Instance([float(value) for value in row[:-1]])
-            digitclass = int(row[-1])
-            classes = [0] * 10 # 10 classes
-            classes[digitclass] = 1.0
-            # Set the ith index to 1 for whatever the class is...
-            instance.setLabel(Instance(classes))
+            instance.setLabel(Instance(0 if int(row[-1]) == 0 else 1))
             instances.append(instance)
-    # print instances
     return instances
 
+
 def initialize_instances():
-    """Read the optdigits CSV data into a list of instances."""
+    """Read the abalone.txt CSV data into a list of instances."""
     instances = []
-
-    # Read in the abalone.txt CSV file
-    with open(TRAIN_FILE, "r") as f:
-        reader = csv.reader(f)
-
+    with open(TRAIN_FILE, "r") as abalone:
+        reader = csv.reader(abalone)
         for row in reader:
-            # Creates an instance using a float of every value in the row except the label
-
-            # instance = Instance([float(value) for value in row[:-1]])
-            # instance.setLabel(Instance(0 if float(row[-1]) < 15 else 1))
-
             instance = Instance([float(value) for value in row[:-1]])
-            digitclass = int(row[-1])
-            classes = [0] * 10 # 10 classes
-            classes = [0] * 3 # 10 classes
-            classes[digitclass] = 1.0
-            # Set the ith index to 1 for whatever the class is...
-            instance.setLabel(Instance(classes))
+            instance.setLabel(Instance(0 if int(row[-1]) == 0 else 1))
             instances.append(instance)
-
-    # print instances
-    print instances[5]
     return instances
 
 
@@ -110,17 +79,8 @@ def train(oa, network, oaName, instances, measure):
             network.run()
 
             output = instance.getLabel()
-            example = Instance(network.getOutputValues())
-            example.setLabel(Instance(network.getOutputValues()))
-            # output_values = network.getOutputValues() # this should be a list of activation values...
-            # example = Instance(network.getOutputValues())
-            # example = Instance(output_values, Instance(output_values.get(0)))
-            # example = Instance(output_values, output)
-            # print "output_values", output_values
-            # print "label/output", output
-            # print "weight", example.getWeight()
-            # sumosquares = 
-            # print "sumosquares", sumosquares
+            output_values = network.getOutputValues()
+            example = Instance(output_values, Instance(output_values.get(0)))
             error += measure.value(output, example)
 
         print "%0.03f" % error
@@ -141,14 +101,13 @@ def main():
     results = ""
 
     for name in oa_names:
-        classification_network = factory.createClassificationNetwork([INPUT_LAYER, HIDDEN_LAYER, HIDDEN_LAYER, HIDDEN_LAYER, OUTPUT_LAYER])
+        classification_network = factory.createClassificationNetwork([INPUT_LAYER, HIDDEN_LAYER, OUTPUT_LAYER])
         networks.append(classification_network)
-		# measure of error for this neural network is sum of squares error
         nnop.append(NeuralNetworkOptimizationProblem(data_set, classification_network, measure))
 
     oa.append(RandomizedHillClimbing(nnop[0]))
-    oa.append(SimulatedAnnealing(1E13, .95, nnop[1]))
-    oa.append(StandardGeneticAlgorithm(200, 180, 5, nnop[2]))
+    oa.append(SimulatedAnnealing(1E4, .95, nnop[1]))
+    oa.append(StandardGeneticAlgorithm(200, 180, 10, nnop[2]))
 
     for i, name in enumerate(oa_names):
         start = time.time()
@@ -167,14 +126,12 @@ def main():
             networks[i].setInputValues(instance.getData())
             networks[i].run()
 
-            actualindex = instance.getLabel().getData().argMax()
-            predictedindex = networks[i].getOutputValues().argMax()
-
-            if actualindex == predictedindex:
+            actual = instance.getLabel().getContinuous()
+            predicted = networks[i].getOutputValues().get(0)
+            if abs(predicted - actual) < 0.5:
                 correct += 1
             else:
                 incorrect += 1
-
         end = time.time()
         testing_time = end - start
 
@@ -185,26 +142,23 @@ def main():
         results += "\nTesting time: %0.03f seconds\n" % (testing_time,)
 
         # Cross validate the data
-        if False:
-            results += "\Cross-validation data -----"
-            correct = 0
-            incorrect = 0
-            for instance in test_instances:
-                networks[i].setInputValues(instance.getData())
-                networks[i].run()
-                actualindex = instance.getLabel().getData().argMax()
-                predictedindex = networks[i].getOutputValues().argMax()
-                if actualindex == predictedindex:
-                    correct += 1
-                else:
-                    incorrect += 1
-            results += "\nResults for %s: \nCorrectly classified %d instances." % (name, correct)
-            results += "\nIncorrectly classified %d instances.\nPercent correctly classified: %0.03f%%" % (incorrect, float(correct)/(correct+incorrect)*100.0)
-
-
+        
+        results += "\Cross-validation data -----"
+        correct = 0
+        incorrect = 0
+        for instance in test_instances:
+            networks[i].setInputValues(instance.getData())
+            networks[i].run()
+            actual = instance.getLabel().getContinuous()
+            predicted = networks[i].getOutputValues().get(0)
+            if abs(predicted - actual) < 0.5:
+                correct += 1
+            else:
+                incorrect += 1
+        results += "\nResults for %s: \nCorrectly classified %d instances." % (name, correct)
+        results += "\nIncorrectly classified %d instances.\nPercent correctly classified: %0.03f%%" % (incorrect, float(correct)/(correct+incorrect)*100.0)
+    
     print results
-
-
 
 
 if __name__ == "__main__":

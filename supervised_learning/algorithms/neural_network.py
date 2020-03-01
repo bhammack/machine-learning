@@ -8,7 +8,7 @@ class NeuralNetworkLearner(AbstractLearner):
     """test"""
     def __init__(self):
         # https://analyticsindiamag.com/a-beginners-guide-to-scikit-learns-mlpclassifier/
-        self.nn_classifier = MLPClassifier(n_iter_no_change=50, learning_rate='constant', hidden_layer_sizes=(100, 100), early_stopping=True, activation='logistic')
+        self.nn_classifier = MLPClassifier(n_iter_no_change=50, learning_rate='constant', hidden_layer_sizes=(16, 16, 16), early_stopping=True, activation='identity')
         # neural networks are iterative
         # digits:
         # {'activation': 'relu', 'hidden_layer_sizes': (100, 100)}
@@ -39,6 +39,13 @@ class NeuralNetworkLearner(AbstractLearner):
         plt.legend(loc="best"), plt.tight_layout()
         plt.show()
 
+    def plot_log_loss(self):
+        plt.title('MLPClassifier log loss per iteration')
+        plt.xlabel('iterations')
+        plt.ylabel('log loss')
+        plt.plot(self.nn_classifier.loss_curve_, color="darkorange")
+        plt.show()
+
     def experiment(self, xtrain, xtest, ytrain, ytest):
         # max_iter is not the iterations of the model / learning rate, it is the upper bound.
         # https://stackoverflow.com/questions/54024816/how-to-plot-learning-rate-vs-accuracy-sklearn
@@ -46,6 +53,7 @@ class NeuralNetworkLearner(AbstractLearner):
         # plt.plot(self.nn_classifier.loss_curve_)
         # self.plot_iterations_score()
         pass
+        self.plot_log_loss()
         # self.plot_validation_curve(xtrain, ytrain, 'alpha', [0.00001, 0.0001, 0.001, 0.01, 0.1])
         # self.plot_validation_curve(xtrain, ytrain, 'learning_rate', [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10])
         # self.plot_validation_curve(xtrain, ytrain, 'max_iter', np.arange(100, 500))
