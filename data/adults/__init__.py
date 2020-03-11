@@ -18,17 +18,17 @@ df, labels = encode(df, [14])
 
 
 # Code to force balance among target class
-print('Balancing Adult data set... please wait')
-greater_than_50k = np.where(df[14] == 1)[0] # 11K
-less_than_50k = np.where(df[14] == 0)[0]
-lt_samples = np.random.choice(less_than_50k, greater_than_50k.shape[0]) # match the less than 50k to greater than 50k in size
-balanced = []
-for index in greater_than_50k:
-    balanced.append(df.iloc[index])
-for index in lt_samples:
-    balanced.append(df.iloc[index])
-balanced = pd.DataFrame(data=balanced, columns=df.columns)
-df = balanced
+# print('Balancing Adult data set... please wait')
+# greater_than_50k = np.where(df[14] == 1)[0] # 11K
+# less_than_50k = np.where(df[14] == 0)[0]
+# lt_samples = np.random.choice(less_than_50k, greater_than_50k.shape[0]) # match the less than 50k to greater than 50k in size
+# balanced = []
+# for index in greater_than_50k:
+#     balanced.append(df.iloc[index])
+# for index in lt_samples:
+#     balanced.append(df.iloc[index])
+# balanced = pd.DataFrame(data=balanced, columns=df.columns)
+# df = balanced
 
 
 

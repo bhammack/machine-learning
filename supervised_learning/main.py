@@ -1,15 +1,15 @@
 import argparse
-from data import adult, wine, digits
+from data import adults, digits
 from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 import time
 import sys
 from pdb import set_trace as debug
-from supervised_learning.algorithms.decision_tree import DecisionTreeLearner
-from supervised_learning.algorithms.k_nearest_neighbor import KNNLearner
-from supervised_learning.algorithms.boosted_tree import BoostedTreeLearner
-from supervised_learning.algorithms.neural_network import NeuralNetworkLearner
-from supervised_learning.algorithms.support_vector_machine import SVMLearner
+from algorithms.decision_tree import DecisionTreeLearner
+from algorithms.k_nearest_neighbor import KNNLearner
+from algorithms.boosted_tree import BoostedTreeLearner
+from algorithms.neural_network import NeuralNetworkLearner
+from algorithms.support_vector_machine import SVMLearner
 import numpy as np
 
 from sklearn.model_selection import validation_curve, learning_curve
@@ -17,9 +17,9 @@ from sklearn.metrics import plot_roc_curve
 
 
 def get_data_set():
-    if args.adult:
+    if args.adults:
         print('USING ADULTS DATA SET!')
-        return adult.x_train, adult.x_test, adult.y_train, adult.y_test, adult.x, adult.y
+        return adults.x_train, adults.x_test, adults.y_train, adults.y_test, adults.x, adults.y
     elif args.digits:
         print('USING DIGITS DATA SET!')
         return digits.x_train, digits.x_test, digits.y_train, digits.y_test, digits.x, digits.y
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('--svm', action='store_true', help='Run the support vector machine experiment')
     parser.add_argument('--bdt', action='store_true', help='Run the boosted decision tree classifier experiment')
 
-    parser.add_argument('--adult', action='store_true', help='Experiment with the adult data set')
+    parser.add_argument('--adults', action='store_true', help='Experiment with the adult data set')
     parser.add_argument('--digits', action='store_true', help='Experiment with the handwritten digits data set')
 
     parser.add_argument('--search', action='store_true', help='Search for the best parameter set')
