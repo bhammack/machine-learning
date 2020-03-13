@@ -15,13 +15,15 @@ def use_data_set():
         return digits.x_train, digits.x_test, digits.y_train, digits.y_test, digits.x, digits.y
 
 
-def use_clustering_algo(y):
+def use_clustering_algo(Y):
+    k = len(np.unique(Y))
+    print('> found {} unique labels in the data...'.format(k))
     if args.kmeans:
         print('> using k-means clustering...')
-        c = clustering.KMeansClustering()
+        c = clustering.KMeansClustering(k)
     if args.em:
         print('> using expectation maximization clustering...')
-        c = clustering.EMClustering()
+        c = clustering.EMClustering(k)
     return c
 
 
