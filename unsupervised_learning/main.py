@@ -47,9 +47,21 @@ def use_clustering_algo(k):
         c = GaussianMixture(n_components=k)
     return c
 
-def _elbow():
-    # Use the elbow method to test the percent variance per number of clusters.
-    pass
+
+def use_reduction_algo(m):
+    if args.pca:
+        print('> reducing data using PCA...')
+        reducer = PCA(n_components=m)
+    if args.ica:
+        print('> reducing data using ICA...')
+        reducer = FastICA(n_components=m)
+    if args.rand:
+        print('> reducing data using Randomized Projections...')
+        reducer = SparseRandomProjection()
+    if args.svd:
+        print('> reducing data using Singular Value Decomp...')
+        reducer = TruncatedSVD(n_components=m)
+    return reducer
 
 
 def cluster():
@@ -60,12 +72,14 @@ def cluster():
     distortions = []
     sil_avgs = []
     gmm_bic = []
+    scores = []
     num_clusters = range(2, 17)
     for k in num_clusters:
         clustering = use_clustering_algo(k)
         clustering.fit(X)
         sil_avgs.append(metrics.silhouette_score(X, clustering.predict(X)))
-        if args.em: gmm_bic.append(clustering.bic(X))
+        scores.append(clustering.score(X))
+        if args.em: gmm_bic.append(-1 * clustering.bic(X))
         if args.kmeans: distortions.append(clustering.inertia_) # inertia is the sum of squared distances of each point to it's closest center
 
     # Elbow method
@@ -84,46 +98,31 @@ def cluster():
     plt.tight_layout()
     plt.show()
     # GM BIC
-    set_trace()
+    # set_trace()
     if args.em:
-        plt.plot(num_clusters, gmm_bic)
+        plt.plot(num_clusters, np.gradient(gmm_bic))
         plt.xlabel('k')
-        plt.ylabel('Log(BIC)')
+        plt.ylabel('gradient(BIC)')
         plt.title('GMM BIC score per clustering: {}'.format(data_set))
         plt.tight_layout()
         plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Scores
+    plt.plot(num_clusters, scores)
+    plt.xlabel('k')
+    plt.ylabel('Clustering score')
+    plt.title('Score per clustering: {}'.format(data_set))
+    plt.tight_layout()
+    plt.show()
 
 
 def dim_reduce():
     print('Reducing the dimensions of the data...')
+    xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
+    dims = range(1, 17)
+    for m in dims:
+        reducer = use_reduction_algo(m)
+
+
 
 
 def cluster_and_reduce():
@@ -148,7 +147,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--pca', action='store_true', help='Reduce dimensions using PCA')
     parser.add_argument('--ica', action='store_true', help='Reduce dimensions using ICA')
-    parser.add_argument('--proj', action='store_true', help='Reduce dimensions using randomized projections')
+    parser.add_argument('--rand', action='store_true', help='Reduce dimensions using randomized projections')
     parser.add_argument('--svd', action='store_true', help='Reduce dimensions using single-value decomposition')
 
     parser.add_argument('--nn', action='store_true', help='Run the neural network on the resultant data')
@@ -161,7 +160,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         parser.print_help()
     do_clustering = args.kmeans or args.em
-    do_reduction = args.pca or args.ica or args.proj or args.svd
+    do_reduction = args.pca or args.ica or args.rand or args.svd
     do_nn = args.nn
 
     if do_clustering and not do_reduction:
