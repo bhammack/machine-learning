@@ -5,33 +5,121 @@ import sys
 from data import adults, digits
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
+from pdb import set_trace
+#
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import KMeans
+from sklearn import metrics
+#
+from sklearn.decomposition import PCA
+from sklearn.decomposition import FastICA
+from sklearn.random_projection import SparseRandomProjection, GaussianRandomProjection
+from sklearn.decomposition import TruncatedSVD
+
+# https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html#sphx-glr-auto-examples-cluster-plot-kmeans-silhouette-analysis-py
+# https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_digits.html#sphx-glr-auto-examples-cluster-plot-kmeans-digits-py
+
+data_set = None
 
 def use_data_set():
+    global data_set
     if args.adults:
         print('> analyzing the adults data set...')
+        data_set = 'Adults'
         return adults.x_train, adults.x_test, adults.y_train, adults.y_test, adults.x, adults.y
     elif args.digits:
         print('> analyzing the digits data set...')
+        data_set = 'Digits'
         return digits.x_train, digits.x_test, digits.y_train, digits.y_test, digits.x, digits.y
 
 
-def use_clustering_algo(Y):
-    k = len(np.unique(Y))
-    print('> found {} unique labels in the data...'.format(k))
+def use_clustering_algo(k):
+    # k = len(np.unique(Y))
+    # print('> found {} unique labels in the data...'.format(k))
     if args.kmeans:
-        print('> using k-means clustering...')
-        c = clustering.KMeansClustering(k)
+        print('> fitting {} clusters using k-means...'.format(k))
+        # c = clustering.KMeansClustering(k)
+        c = KMeans(n_clusters=k)
     if args.em:
-        print('> using expectation maximization clustering...')
-        c = clustering.EMClustering(k)
+        print('> fitting {} clusters using expectation maximization...'.format(k))
+        # c = clustering.EMClustering(k)
+        c = GaussianMixture(n_components=k)
     return c
+
+def _elbow():
+    # Use the elbow method to test the percent variance per number of clusters.
+    pass
 
 
 def cluster():
     print('Clustering the data...')
     xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
-    clustering = use_clustering_algo(Y)
-    clustering.experiment(xtrain, xtest, ytrain, ytest, X, Y)
+    # https://pythonprogramminglanguage.com/kmeans-elbow-method/
+    # https://github.com/tirthajyoti/Machine-Learning-with-Python/blob/master/Clustering-Dimensionality-Reduction/Clustering_metrics.ipynb
+    distortions = []
+    sil_avgs = []
+    gmm_bic = []
+    num_clusters = range(2, 17)
+    for k in num_clusters:
+        clustering = use_clustering_algo(k)
+        clustering.fit(X)
+        sil_avgs.append(metrics.silhouette_score(X, clustering.predict(X)))
+        if args.em: gmm_bic.append(clustering.bic(X))
+        if args.kmeans: distortions.append(clustering.inertia_) # inertia is the sum of squared distances of each point to it's closest center
+
+    # Elbow method
+    if args.kmeans:
+        plt.plot(num_clusters, distortions)
+        plt.xlabel('k')
+        plt.ylabel('inertia')
+        plt.title('Elbow method / k vs inertia: {}'.format(data_set))
+        plt.tight_layout()
+        plt.show()
+    # Silhouette score
+    plt.plot(num_clusters, sil_avgs)
+    plt.xlabel('k')
+    plt.ylabel('silhouette score')
+    plt.title('Silhouette score per clustering: {}'.format(data_set))
+    plt.tight_layout()
+    plt.show()
+    # GM BIC
+    set_trace()
+    if args.em:
+        plt.plot(num_clusters, gmm_bic)
+        plt.xlabel('k')
+        plt.ylabel('Log(BIC)')
+        plt.title('GMM BIC score per clustering: {}'.format(data_set))
+        plt.tight_layout()
+        plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def dim_reduce():
