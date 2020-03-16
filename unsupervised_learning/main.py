@@ -50,16 +50,16 @@ def use_clustering_algo(k):
 
 def use_reduction_algo(m):
     if args.pca:
-        print('> reducing data using PCA...')
+        print('> reducing to {} features using PCA...'.format(m))
         reducer = PCA(n_components=m)
     if args.ica:
-        print('> reducing data using ICA...')
+        print('> reducing to {} features using ICA...'.format(m))
         reducer = FastICA(n_components=m)
     if args.rand:
-        print('> reducing data using Randomized Projections...')
+        print('> reducing to {} features using Randomized Projections...'.format(m))
         reducer = SparseRandomProjection()
     if args.svd:
-        print('> reducing data using Singular Value Decomp...')
+        print('> reducing to {} features using Singular Value Decomp...'.format(m))
         reducer = TruncatedSVD(n_components=m)
     return reducer
 
@@ -116,11 +116,28 @@ def cluster():
 
 
 def dim_reduce():
+    # https://stackabuse.com/implementing-pca-in-python-with-scikit-learn/
     print('Reducing the dimensions of the data...')
     xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
-    dims = range(1, 17)
+    dims = range(2, 61)
+    total_var = []
     for m in dims:
         reducer = use_reduction_algo(m)
+        reducer.fit(X)
+        if args.pca: 
+            total_variance = np.sum(reducer.explained_variance_ratio_)
+            print(' > total variance: {}'.format(total_variance))
+            total_var.append(total_variance)
+       #  set_trace()
+    # Scores
+    set_trace()
+    if args.pca:
+        plt.plot(dims, total_var)
+        plt.xlabel('No. features')
+        plt.ylabel('Variance (%)')
+        plt.title('Total variance per no. features: {}'.format(data_set))
+        plt.tight_layout()
+        plt.show()
 
 
 
