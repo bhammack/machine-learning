@@ -233,35 +233,11 @@ def cluster_and_reduce(X, Y):
     print('Reducing then clustering the data...')
     # xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
     num_clusters = range(2, 15)
-    # dims = [10, 15, 20, 25, 30, 40, 50, 55, 60]
-    dims = [50]
-    visualize = False
+    dims = [10, 15, 20, 25, 30, 40, 50, 55, 60]
+    # dims = [50]
     # visualizations of all data in two dimensions
-    if visualize:
-        k = 2
-        pca = PCA(n_components=k)
-        ica = FastICA(n_components=k)
-        rca = GaussianRandomProjection(n_components=k)
-        lda = LinearDiscriminantAnalysis(n_components=k)
-        #
-        X_pca = pca.fit_transform(X)
-        X_ica = ica.fit_transform(X)
-        X_rca = rca.fit_transform(X)
-        X_lda = lda.fit_transform(X, Y)
-        #
-        clustering = use_clustering_algo(11)
-        pca_labels = clustering.fit_predict(X_pca)
-        ica_labels = clustering.fit_predict(X_ica)
-        rca_labels = clustering.fit_predict(X_rca)
-        lda_labels = clustering.fit_predict(X_lda)
-        plt.scatter(X_pca[:,0], X_pca[:,1], c=pca_labels, cmap='viridis', label='PCA'), plt.show()
-        plt.scatter(X_ica[:,0], X_ica[:,1], c=ica_labels, cmap='viridis', label='ICA'), plt.show()
-        plt.scatter(X_rca[:,0], X_rca[:,1], c=rca_labels, cmap='viridis', label='RCA'), plt.show()
-        # plt.scatter(X_lda[:,0], X_lda[:,1], c=lda_labels, cmap='viridis', label='LDA'), plt.show()
-
-
-    for m in dims:
-        print('Using {} components...'.format(m))
+    if args.visualize and args.kmeans:
+        m = 2
         pca = PCA(n_components=m)
         ica = FastICA(n_components=m)
         rca = GaussianRandomProjection(n_components=m)
@@ -272,97 +248,107 @@ def cluster_and_reduce(X, Y):
         X_rca = rca.fit_transform(X)
         X_lda = lda.fit_transform(X, Y)
         #
-        distortions = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
-        silhouettes = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
-        gmm_bics = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
-
-        for k in num_clusters:
-            clustering = use_clustering_algo(k)
-            clustering.fit(X_pca)
-            if args.kmeans: 
-                silhouettes['PCA'].append(silhouette_score(X_pca, clustering.predict(X_pca)))
-                distortions['PCA'].append(clustering.inertia_)
-            if args.em: gmm_bics['PCA'].append(-1 * clustering.bic(X_pca))
-
-            clustering.fit(X_ica)
-            if args.kmeans: 
-                distortions['ICA'].append(clustering.inertia_)
-                silhouettes['ICA'].append(silhouette_score(X_ica, clustering.predict(X_ica)))
-            if args.em: gmm_bics['ICA'].append(-1 * clustering.bic(X_ica))
-
-
-            clustering.fit(X_rca)
-            if args.kmeans: 
-                distortions['RCA'].append(clustering.inertia_)
-                silhouettes['RCA'].append(silhouette_score(X_rca, clustering.predict(X_rca)))
-            if args.em: gmm_bics['RCA'].append(-1 * clustering.bic(X_rca))
-
-
-            clustering.fit(X_lda)
-            if args.kmeans: 
-                distortions['LDA'].append(clustering.inertia_)
-                silhouettes['LDA'].append(silhouette_score(X_lda, clustering.predict(X_lda)))
-            if args.em: gmm_bics['LCA'].append(-1 * clustering.bic(X_lda))
-
-
-        if args.kmeans:
-            # Elbow inertia
-            # for dimred, distortions in distortions.items():
-            #     plt.plot(num_clusters, distortions, label=dimred)
-            # plt.xlabel('k'), plt.ylabel('inertia'), plt.legend(loc='best')
-            # plt.title('Elbow method / k vs inertia: {}'.format(data_set))
-            # plt.tight_layout(), plt.show()
-            # Silhouette scores
-            for dimred, sils in silhouettes.items():
-                plt.plot(num_clusters, sils, label=dimred)
-            plt.xlabel('k'), plt.ylabel('Silhouette score'), plt.legend(loc='best')
-            plt.title('Silhouette score per clustering: {} [m={}]'.format(data_set, m))
-            plt.tight_layout(), plt.show()
-        if args.em:
-            for dimred, bics in gmm_bics.items():
-                plt.plot(num_clusters, np.gradient(bics), label=dimred)
-            plt.xlabel('k'), plt.ylabel('gradient(BIC)'), plt.legend(loc='best')
-            plt.title('GMM BIC score per clustering: {} [m={}]'.format(data_set, m))
-            plt.tight_layout(), plt.show()
-
-
-        
-
-
-    # for m in dims:
-    #     print('Using {} components...'.format(m))
-    #     for k in num_clusters:
-    #         if args.pca:
-    #             pca = PCA(n_components=m)
-    #             X_pca = pca.fit_transform(X)
-    #             clustering = use_clustering_algo(k)
-    #             labels = clustering.fit_predict(X_pca)
-                
-
-                
-    #         if args.ica:
-    #             ica = FastICA(n_components=m)
-    #             X_ica = ica.fit_transform(X)
-                
-    #         if args.rca:
-    #             rca = GaussianRandomProjection(n_components=m)
-    #             X_rca = rca.fit_transform(X)
-                
-    #         if args.lda:
-    #             lda = LinearDiscriminantAnalysis(n_components=m)
-    #             X_lda = lda.fit_transform(X, Y)
-            
-    # for k in num_clusters:
-    #     clustering = use_clustering_algo(k)
-    #     clustering.fit(X)
-    #     sil_avgs.append(metrics.silhouette_score(X, clustering.predict(X)))
-    #     scores.append(clustering.score(X))
-    #     if args.em: gmm_bic.append(-1 * clustering.bic(X))
-    #     if args.kmeans: distortions.append(clustering.inertia_) # inertia is the sum of squared distances of each point to it's closest center
+        k = 3
+        clustering = use_clustering_algo(k)
+        pca_labels = clustering.fit_predict(X_pca)
+        ica_labels = clustering.fit_predict(X_ica)
+        rca_labels = clustering.fit_predict(X_rca)
+        lda_labels = clustering.fit_predict(X_lda)
+        plt.scatter(X_pca[:,0], X_pca[:,1], c=pca_labels, cmap='viridis', label='PCA'), plt.show()
+        plt.scatter(X_ica[:,0], X_ica[:,1], c=ica_labels, cmap='viridis', label='ICA'), plt.show()
+        plt.scatter(X_rca[:,0], X_rca[:,1], c=rca_labels, cmap='viridis', label='RCA'), plt.show()
+        # plt.scatter(X_lda[:,0], X_lda[:,1], c=lda_labels, cmap='viridis', label='LDA'), plt.show()
+    if args.visualize and args.em:
+        m = 2
+        pca = PCA(n_components=m)
+        ica = FastICA(n_components=m)
+        rca = GaussianRandomProjection(n_components=m)
+        lda = LinearDiscriminantAnalysis(n_components=m)
+        #
+        X_pca = pca.fit_transform(X)
+        X_ica = ica.fit_transform(X)
+        X_rca = rca.fit_transform(X)
+        X_lda = lda.fit_transform(X, Y)
+        #
+        k = 4
+        clustering = use_clustering_algo(k)
+        pca_labels = clustering.fit_predict(X_pca)
+        ica_labels = clustering.fit_predict(X_ica)
+        rca_labels = clustering.fit_predict(X_rca)
+        lda_labels = clustering.fit_predict(X_lda)
+        plt.scatter(X_pca[:,0], X_pca[:,1], c=pca_labels, cmap='viridis', label='PCA'), plt.show()
+        plt.scatter(X_ica[:,0], X_ica[:,1], c=ica_labels, cmap='viridis', label='ICA'), plt.show()
+        plt.scatter(X_rca[:,0], X_rca[:,1], c=rca_labels, cmap='viridis', label='RCA'), plt.show()
+        # plt.scatter(X_lda[:,0], X_lda[:,1], c=lda_labels, cmap='viridis', label='LDA'), plt.show()
 
 
 
 
+    if not args.visualize:
+        for m in dims:
+            print('Using {} components...'.format(m))
+            pca = PCA(n_components=m)
+            ica = FastICA(n_components=m)
+            rca = GaussianRandomProjection(n_components=m)
+            lda = LinearDiscriminantAnalysis(n_components=m)
+            #
+            X_pca = pca.fit_transform(X)
+            X_ica = ica.fit_transform(X)
+            X_rca = rca.fit_transform(X)
+            X_lda = lda.fit_transform(X, Y)
+            #
+            distortions = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
+            silhouettes = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
+            gmm_bics = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
+
+            for k in num_clusters:
+                clustering = use_clustering_algo(k)
+                clustering.fit(X_pca)
+                if args.kmeans: 
+                    silhouettes['PCA'].append(silhouette_score(X_pca, clustering.predict(X_pca)))
+                    distortions['PCA'].append(clustering.inertia_)
+                if args.em: gmm_bics['PCA'].append(-1 * clustering.bic(X_pca))
+
+                clustering.fit(X_ica)
+                if args.kmeans: 
+                    distortions['ICA'].append(clustering.inertia_)
+                    silhouettes['ICA'].append(silhouette_score(X_ica, clustering.predict(X_ica)))
+                if args.em: gmm_bics['ICA'].append(-1 * clustering.bic(X_ica))
+
+
+                clustering.fit(X_rca)
+                if args.kmeans: 
+                    distortions['RCA'].append(clustering.inertia_)
+                    silhouettes['RCA'].append(silhouette_score(X_rca, clustering.predict(X_rca)))
+                if args.em: gmm_bics['RCA'].append(-1 * clustering.bic(X_rca))
+
+
+                clustering.fit(X_lda)
+                if args.kmeans: 
+                    distortions['LDA'].append(clustering.inertia_)
+                    silhouettes['LDA'].append(silhouette_score(X_lda, clustering.predict(X_lda)))
+                if args.em: gmm_bics['LDA'].append(-1 * clustering.bic(X_lda))
+
+
+            if args.kmeans:
+                # Elbow inertia
+                # for dimred, distortions in distortions.items():
+                #     plt.plot(num_clusters, distortions, label=dimred)
+                # plt.xlabel('k'), plt.ylabel('inertia'), plt.legend(loc='best')
+                # plt.title('Elbow method / k vs inertia: {}'.format(data_set))
+                # plt.tight_layout(), plt.show()
+                # Silhouette scores
+                for dimred, sils in silhouettes.items():
+                    plt.plot(num_clusters, sils, label=dimred)
+                plt.xlabel('k'), plt.ylabel('Silhouette score'), plt.legend(loc='best')
+                plt.title('Silhouette score per clustering: {} [m={}]'.format(data_set, m))
+                plt.tight_layout(), plt.show()
+            if args.em:
+                for dimred, bics in gmm_bics.items():
+                    plt.plot(num_clusters, np.gradient(bics), label=dimred)
+                plt.xlabel('k'), plt.ylabel('gradient(BIC)'), plt.legend(loc='best')
+                plt.title('GMM BIC score per clustering: {} [m={}]'.format(data_set, m))
+                plt.tight_layout(), plt.show()
 
 
 
@@ -389,6 +375,8 @@ if __name__ == "__main__":
     parser.add_argument('--lda', action='store_true', help='Reduce dimensions using LDA')
 
     parser.add_argument('--nn', action='store_true', help='Run the neural network on the resultant data')
+    
+    parser.add_argument('--visualize', action='store_true', help='Visualize the clusters')
 
     parser.add_argument('--adults', action='store_true', help='Experiment with the U.S. adults data set')
     parser.add_argument('--digits', action='store_true', help='Experiment with the handwritten digits data set')
