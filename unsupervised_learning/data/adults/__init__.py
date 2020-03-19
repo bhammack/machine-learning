@@ -22,8 +22,8 @@ df, labels = encode(df, [14])
 df[cols_to_scale] = scaler.fit_transform(df[cols_to_scale])
 
 # Pop off the class labels
-y = df.pop(14)
-x = df
+y = df.pop(14).to_numpy()
+x = df.to_numpy()
 
 
 x_train, x_test, y_train, y_test = split(x, y, 0.33)

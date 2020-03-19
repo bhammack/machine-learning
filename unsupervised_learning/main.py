@@ -10,10 +10,11 @@ from pdb import set_trace
 #
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
-from sklearn import metrics
+from sklearn.metrics import silhouette_score
 #
 from sklearn.decomposition import PCA, FastICA, TruncatedSVD, KernelPCA
 from sklearn.random_projection import GaussianRandomProjection
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 #
 from scipy.stats import kurtosis
 from scipy.linalg import pinv # pseudo inverse function of matrix
@@ -29,7 +30,7 @@ def use_data_set():
     if args.adults:
         print('> analyzing the adults data set...')
         data_set = 'Adults'
-        return adults.x_train, adults.x_test, adults.y_train, adults.y_test, adults.x.to_numpy(), adults.y.to_numpy()
+        return adults.x_train, adults.x_test, adults.y_train, adults.y_test, adults.x, adults.y
     elif args.digits:
         print('> analyzing the digits data set...')
         data_set = 'Digits'
@@ -67,9 +68,8 @@ def use_reduction_algo(m):
     return reducer
 
 
-def cluster():
+def cluster(X, Y=None):
     print('Clustering the data...')
-    xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
     # https://pythonprogramminglanguage.com/kmeans-elbow-method/
     # https://github.com/tirthajyoti/Machine-Learning-with-Python/blob/master/Clustering-Dimensionality-Reduction/Clustering_metrics.ipynb
     distortions = []
@@ -80,7 +80,7 @@ def cluster():
     for k in num_clusters:
         clustering = use_clustering_algo(k)
         clustering.fit(X)
-        sil_avgs.append(metrics.silhouette_score(X, clustering.predict(X)))
+        sil_avgs.append(silhouette_score(X, clustering.predict(X)))
         scores.append(clustering.score(X))
         if args.em: gmm_bic.append(-1 * clustering.bic(X))
         if args.kmeans: distortions.append(clustering.inertia_) # inertia is the sum of squared distances of each point to it's closest center
@@ -118,53 +118,68 @@ def cluster():
     plt.show()
 
 
-def dim_reduce():
+def dim_reduce(X, Y):
     # https://stackabuse.com/implementing-pca-in-python-with-scikit-learn/
     print('Reducing the dimensions of the data...')
-    xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
+    # xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
     dims = range(2, 63)
     pca_total_var = []
+    lda_total_var = []
     ica_kurtosis_means = []
     rca_recon_errors = []
-    svd_recon_errors = []
     pca_recon_errors = []
     ica_recon_errors = []
+    kpca_recon_errors = {}
     for m in dims:
-        pca = PCA(n_components=m)
-        ica = FastICA(n_components=m)
-        rca = GaussianRandomProjection(n_components=m)
-        svd = TruncatedSVD(n_components=m)
-        # 
-        X_pca = pca.fit_transform(X)
-        X_ica = ica.fit_transform(X)
-        X_rca = rca.fit_transform(X)
-        X_svd = svd.fit_transform(X)
-        # 
-        # reducer = use_reduction_algo(m)
-        # reducer.fit(X)
-        # X_r = reducer.transform(X)
-        if args.pca: 
+        print('Using {} components...'.format(m))
+        if args.pca:
+            pca = PCA(n_components=m)
+            X_pca = pca.fit_transform(X)
             total_variance = np.sum(pca.explained_variance_ratio_)
             print(' > PCA total variance: {}'.format(total_variance))
             pca_total_var.append(total_variance)
             X_recon = pca.inverse_transform(X_pca)
             pca_recon_errors.append(np.square(np.subtract(X, X_recon)).mean())
         if args.ica:
+            ica = FastICA(n_components=m)
+            X_ica = ica.fit_transform(X)
             kurtosis_mean = np.mean(np.abs(kurtosis(X_ica)))
             print(' > ICA kurtosis mean: {}'.format(kurtosis_mean))
             ica_kurtosis_means.append(kurtosis_mean)
             X_recon = ica.inverse_transform(X_ica)
             ica_recon_errors.append(np.square(np.subtract(X, X_recon)).mean())
         if args.rca:
+            rca = GaussianRandomProjection(n_components=m)
+            X_rca = rca.fit_transform(X)
             # calculate the reconstruction error
             # https://omscs-study.slack.com/archives/C08LK14DV/p1584134696113900
             w = rca.components_ # random matrix used in the projection
             w_inv = pinv(w.T) # find the pseudo inverse of the projection matrix
             X_recon = X_rca @ w_inv
             rca_recon_errors.append(np.square(np.subtract(X, X_recon)).mean())
-        if args.svd:
-            X_recon = svd.inverse_transform(X_svd)
-            svd_recon_errors.append(np.square(np.subtract(X, X_recon)).mean())
+        if args.kpca:
+            # for kernel in ['linear', 'rbf', 'cosine']:
+            for kernel in ['linear']:
+                kpca = KernelPCA(n_components=m, fit_inverse_transform=True, kernel=kernel)
+                X_kpca = kpca.fit_transform(X)
+                # https://stackoverflow.com/questions/29611842/scikit-learn-kernel-pca-explained-variance
+                # explained_variance = np.var(X_kpca, axis=0)
+                # explained_variance_ratio = explained_variance / np.sum(explained_variance)
+                # kpca_total_var.append(np.sum(explained_variance_ratio))
+                # total_variance = np.sum(kpca.explained_variance_ratio_)
+                # print(' > Kernel-PCA total variance: {}'.format(total_variance))
+                # pca_total_var.append(total_variance)
+                X_recon = kpca.inverse_transform(X_kpca)
+                kpca_recon_error = np.square(np.subtract(X, X_recon)).mean()
+                if kernel in kpca_recon_errors.keys():
+                    kpca_recon_errors[kernel].append(kpca_recon_error)
+                else:
+                    kpca_recon_errors[kernel] = [kpca_recon_error]
+        if args.lda:
+            lda = LinearDiscriminantAnalysis(n_components=m)
+            X_lda = lda.fit_transform(X, Y)
+            lda_total_var.append(np.sum(lda.explained_variance_ratio_))
+
             # set_trace()
     # Test multiple methods against each other
     # Scores
@@ -172,16 +187,14 @@ def dim_reduce():
     # https://towardsdatascience.com/an-approach-to-choosing-the-number-of-components-in-a-principal-component-analysis-pca-3b9f3d6e73fe
     if args.pca:
         plt.plot(dims, pca_total_var)
-        plt.xlabel('No. components')
-        plt.ylabel('Variance (%)')
+        plt.xlabel('No. components'), plt.ylabel('Variance (%)')
         plt.title('Preserved variance per no. components: {}'.format(data_set))
         plt.tight_layout()
         plt.show()
     if args.ica:
         # https://piazza.com/class/k51r1vdohil5g3?cid=592_f11
         plt.plot(dims, ica_kurtosis_means)
-        plt.xlabel('No. components')
-        plt.ylabel('Kurtosis')
+        plt.xlabel('No. components'), plt.ylabel('Kurtosis')
         plt.title('Kurtosis per no. components: {}'.format(data_set))
         plt.tight_layout()
         plt.show()
@@ -191,32 +204,166 @@ def dim_reduce():
         # Use inverse_transform somwhere...
         # https://piazza.com/class/k51r1vdohil5g3?cid=592_f15
         plt.plot(dims, rca_recon_errors)
-        plt.xlabel('No. components')
-        plt.ylabel('Reconstruction error')
+        plt.xlabel('No. components'), plt.ylabel('Reconstruction error')
         plt.title('Reconstruction error per no. components: {}'.format(data_set))
         plt.tight_layout()
         plt.show()
-    if args.svd:
-        plt.plot(dims, svd_recon_errors)
-        plt.xlabel('No. components')
-        plt.ylabel('Reconstruction error')
-        plt.title('Reconstruction error per no. components: {}'.format(data_set))
-        plt.tight_layout()
+    if args.pca and args.lda:
+        plt.plot(dims, pca_total_var, label='PCA')
+        plt.plot(dims, lda_total_var, label='LDA')
+        plt.xlabel('No. components'), plt.ylabel('Variance (%)')
+        plt.title('Preserved variance per no. components: {}'.format(data_set))
+        plt.tight_layout(),  plt.legend(loc="best")
         plt.show()
-    if args.pca and args.rca and args.svd:
+    if args.pca and args.rca and args.kpca:
         plt.plot(dims, pca_recon_errors, label='PCA')
-        # plt.plot(dims, ica_recon_errors, label='ICA') # ica and pca have the same recon error????
         plt.plot(dims, rca_recon_errors, label='RCA')
-        plt.plot(dims, svd_recon_errors, label='SVD')
+        for kernel, recon_errors in kpca_recon_errors.items():
+            plt.plot(dims, recon_errors, label='KPCA [{}]'.format(kernel))
         plt.xlabel('No. components'), plt.ylabel('Reconstruction error')
         plt.title('Reconstruction error per no. components: {}'.format(data_set))
         plt.tight_layout(), plt.legend(loc="best")
         plt.show()
+    if args.lda:
+        pass
 
 
 
-def cluster_and_reduce():
-    print('Clustering and reducing the data...')
+def cluster_and_reduce(X, Y):
+    print('Reducing then clustering the data...')
+    # xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
+    num_clusters = range(2, 15)
+    # dims = [10, 15, 20, 25, 30, 40, 50, 55, 60]
+    dims = [50]
+    visualize = False
+    # visualizations of all data in two dimensions
+    if visualize:
+        k = 2
+        pca = PCA(n_components=k)
+        ica = FastICA(n_components=k)
+        rca = GaussianRandomProjection(n_components=k)
+        lda = LinearDiscriminantAnalysis(n_components=k)
+        #
+        X_pca = pca.fit_transform(X)
+        X_ica = ica.fit_transform(X)
+        X_rca = rca.fit_transform(X)
+        X_lda = lda.fit_transform(X, Y)
+        #
+        clustering = use_clustering_algo(11)
+        pca_labels = clustering.fit_predict(X_pca)
+        ica_labels = clustering.fit_predict(X_ica)
+        rca_labels = clustering.fit_predict(X_rca)
+        lda_labels = clustering.fit_predict(X_lda)
+        plt.scatter(X_pca[:,0], X_pca[:,1], c=pca_labels, cmap='viridis', label='PCA'), plt.show()
+        plt.scatter(X_ica[:,0], X_ica[:,1], c=ica_labels, cmap='viridis', label='ICA'), plt.show()
+        plt.scatter(X_rca[:,0], X_rca[:,1], c=rca_labels, cmap='viridis', label='RCA'), plt.show()
+        # plt.scatter(X_lda[:,0], X_lda[:,1], c=lda_labels, cmap='viridis', label='LDA'), plt.show()
+
+
+    for m in dims:
+        print('Using {} components...'.format(m))
+        pca = PCA(n_components=m)
+        ica = FastICA(n_components=m)
+        rca = GaussianRandomProjection(n_components=m)
+        lda = LinearDiscriminantAnalysis(n_components=m)
+        #
+        X_pca = pca.fit_transform(X)
+        X_ica = ica.fit_transform(X)
+        X_rca = rca.fit_transform(X)
+        X_lda = lda.fit_transform(X, Y)
+        #
+        distortions = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
+        silhouettes = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
+        gmm_bics = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
+
+        for k in num_clusters:
+            clustering = use_clustering_algo(k)
+            clustering.fit(X_pca)
+            if args.kmeans: 
+                silhouettes['PCA'].append(silhouette_score(X_pca, clustering.predict(X_pca)))
+                distortions['PCA'].append(clustering.inertia_)
+            if args.em: gmm_bics['PCA'].append(-1 * clustering.bic(X_pca))
+
+            clustering.fit(X_ica)
+            if args.kmeans: 
+                distortions['ICA'].append(clustering.inertia_)
+                silhouettes['ICA'].append(silhouette_score(X_ica, clustering.predict(X_ica)))
+            if args.em: gmm_bics['ICA'].append(-1 * clustering.bic(X_ica))
+
+
+            clustering.fit(X_rca)
+            if args.kmeans: 
+                distortions['RCA'].append(clustering.inertia_)
+                silhouettes['RCA'].append(silhouette_score(X_rca, clustering.predict(X_rca)))
+            if args.em: gmm_bics['RCA'].append(-1 * clustering.bic(X_rca))
+
+
+            clustering.fit(X_lda)
+            if args.kmeans: 
+                distortions['LDA'].append(clustering.inertia_)
+                silhouettes['LDA'].append(silhouette_score(X_lda, clustering.predict(X_lda)))
+            if args.em: gmm_bics['LCA'].append(-1 * clustering.bic(X_lda))
+
+
+        if args.kmeans:
+            # Elbow inertia
+            # for dimred, distortions in distortions.items():
+            #     plt.plot(num_clusters, distortions, label=dimred)
+            # plt.xlabel('k'), plt.ylabel('inertia'), plt.legend(loc='best')
+            # plt.title('Elbow method / k vs inertia: {}'.format(data_set))
+            # plt.tight_layout(), plt.show()
+            # Silhouette scores
+            for dimred, sils in silhouettes.items():
+                plt.plot(num_clusters, sils, label=dimred)
+            plt.xlabel('k'), plt.ylabel('Silhouette score'), plt.legend(loc='best')
+            plt.title('Silhouette score per clustering: {} [m={}]'.format(data_set, m))
+            plt.tight_layout(), plt.show()
+        if args.em:
+            for dimred, bics in gmm_bics.items():
+                plt.plot(num_clusters, np.gradient(bics), label=dimred)
+            plt.xlabel('k'), plt.ylabel('gradient(BIC)'), plt.legend(loc='best')
+            plt.title('GMM BIC score per clustering: {} [m={}]'.format(data_set, m))
+            plt.tight_layout(), plt.show()
+
+
+        
+
+
+    # for m in dims:
+    #     print('Using {} components...'.format(m))
+    #     for k in num_clusters:
+    #         if args.pca:
+    #             pca = PCA(n_components=m)
+    #             X_pca = pca.fit_transform(X)
+    #             clustering = use_clustering_algo(k)
+    #             labels = clustering.fit_predict(X_pca)
+                
+
+                
+    #         if args.ica:
+    #             ica = FastICA(n_components=m)
+    #             X_ica = ica.fit_transform(X)
+                
+    #         if args.rca:
+    #             rca = GaussianRandomProjection(n_components=m)
+    #             X_rca = rca.fit_transform(X)
+                
+    #         if args.lda:
+    #             lda = LinearDiscriminantAnalysis(n_components=m)
+    #             X_lda = lda.fit_transform(X, Y)
+            
+    # for k in num_clusters:
+    #     clustering = use_clustering_algo(k)
+    #     clustering.fit(X)
+    #     sil_avgs.append(metrics.silhouette_score(X, clustering.predict(X)))
+    #     scores.append(clustering.score(X))
+    #     if args.em: gmm_bic.append(-1 * clustering.bic(X))
+    #     if args.kmeans: distortions.append(clustering.inertia_) # inertia is the sum of squared distances of each point to it's closest center
+
+
+
+
+
 
 
 def cluster_and_nn():
@@ -238,7 +385,8 @@ if __name__ == "__main__":
     parser.add_argument('--pca', action='store_true', help='Reduce dimensions using PCA')
     parser.add_argument('--ica', action='store_true', help='Reduce dimensions using ICA')
     parser.add_argument('--rca', action='store_true', help='Reduce dimensions using randomized projections')
-    parser.add_argument('--svd', action='store_true', help='Reduce dimensions using single-value decomposition')
+    parser.add_argument('--kpca', action='store_true', help='Reduce dimensions using Kernel-PCA')
+    parser.add_argument('--lda', action='store_true', help='Reduce dimensions using LDA')
 
     parser.add_argument('--nn', action='store_true', help='Run the neural network on the resultant data')
 
@@ -250,18 +398,20 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         parser.print_help()
     do_clustering = args.kmeans or args.em
-    do_reduction = args.pca or args.ica or args.rca or args.svd
+    do_reduction = args.pca or args.ica or args.rca or args.kpca
     do_nn = args.nn
+
+    xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
 
     if do_clustering and not do_reduction:
         # Only do clustering
-        cluster()
+        cluster(X, Y)
     if do_reduction and not do_clustering:
         # Only do reduction
-        dim_reduce()
+        dim_reduce(X, Y)
     if do_clustering and do_reduction:
         # Do both clustering and reduction
-        cluster_and_reduce()
+        cluster_and_reduce(X, Y)
     if do_reduction and do_nn and not do_clustering:
         # Run a nn on the reduced dimensions
         reduce_and_nn()
