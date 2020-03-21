@@ -2,7 +2,7 @@
 import clustering
 import reduction
 import sys
-from data import adults, digits
+from data import adults, digits, split
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +11,8 @@ from pdb import set_trace
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import learning_curve
 #
 from sklearn.decomposition import PCA, FastICA, TruncatedSVD, KernelPCA
 from sklearn.random_projection import GaussianRandomProjection
@@ -19,7 +21,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from scipy.stats import kurtosis
 from scipy.linalg import pinv # pseudo inverse function of matrix
 from scipy.sparse import issparse
-
 # https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html#sphx-glr-auto-examples-cluster-plot-kmeans-silhouette-analysis-py
 # https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_digits.html#sphx-glr-auto-examples-cluster-plot-kmeans-digits-py
 
@@ -30,11 +31,11 @@ def use_data_set():
     if args.adults:
         print('> analyzing the adults data set...')
         data_set = 'Adults'
-        return adults.x_train, adults.x_test, adults.y_train, adults.y_test, adults.x, adults.y
+        return adults.x, adults.y
     elif args.digits:
         print('> analyzing the digits data set...')
         data_set = 'Digits'
-        return digits.x_train, digits.x_test, digits.y_train, digits.y_test, digits.x, digits.y
+        return digits.x, digits.y
 
 
 def use_clustering_algo(k):
@@ -282,8 +283,6 @@ def cluster_and_reduce(X, Y):
         # plt.scatter(X_lda[:,0], X_lda[:,1], c=lda_labels, cmap='viridis', label='LDA'), plt.show()
 
 
-
-
     if not args.visualize:
         for m in dims:
             print('Using {} components...'.format(m))
@@ -351,13 +350,62 @@ def cluster_and_reduce(X, Y):
                 plt.tight_layout(), plt.show()
 
 
+def reduce_and_nn(X, Y):
+    print('Applying dimension reduction and running the neural network...')
+    dims = [10, 30, 50]
+    for m in dims:
+        print('Using {} components...'.format(m))
+        nn = MLPClassifier(hidden_layer_sizes=(16, 16, 16))
+        nn_pca = MLPClassifier(hidden_layer_sizes=(16, 16, 16))
+        nn_ica = MLPClassifier(hidden_layer_sizes=(16, 16, 16))
+        nn_rca = MLPClassifier(hidden_layer_sizes=(16, 16, 16))
+        nn_lda = MLPClassifier(hidden_layer_sizes=(16, 16, 16))
+        #
+        # nn_pca.fit(PCA(n_components=m).fit_transform(X), Y)
+        # nn_ica.fit(FastICA(n_components=m).fit_transform(X), Y)
+        # nn_rca.fit(GaussianRandomProjection(n_components=m).fit_transform(X), Y)
+        # nn_lda.fit(LinearDiscriminantAnalysis(n_components=m).fit_transform(X, Y), Y)
+        # pca_xtrain, pca_xtest, pca_ytrain, pca_ytest = split(PCA(n_components=m).fit_transform(X), Y)
+        # ica_xtrain, ica_xtest, ica_ytrain, ica_ytest = split(FastICA(n_components=m).fit_transform(X), Y)
+        # rca_xtrain, rca_xtest, rca_ytrain, rca_ytest = split(GaussianRandomProjection(n_components=m).fit_transform(X), Y)
+        # lda_xtrain, lda_xtest, lda_ytrain, lda_ytest = split(LinearDiscriminantAnalysis(n_components=m).fit_transform(X, Y), Y)
+        # 
+        # nn_pca.fit(pca_xtrain, pca_ytrain)
+        # nn_ica.fit(ica_xtrain, ica_ytrain)
+        # nn_rca.fit(rca_xtrain, rca_ytrain)
+        # nn_lda.fit(lda_xtrain, lda_ytrain)
+        #
+        plot_learning_curve(nn, X, Y, 'default', 'blue', 'navy')
+        if args.pca: plot_learning_curve(nn_pca, PCA(n_components=m).fit_transform(X), Y, 'PCA', 'green', 'darkgreen')
+        if args.ica: plot_learning_curve(nn_ica, FastICA(n_components=m).fit_transform(X), Y, 'ICA', 'violet', 'darkviolet')
+        if args.rca: plot_learning_curve(nn_rca, GaussianRandomProjection(n_components=m).fit_transform(X), Y, 'RCA', 'cyan', 'darkcyan')
+        if args.lda: plot_learning_curve(nn_lda, LinearDiscriminantAnalysis(n_components=m).fit_transform(X, Y), Y, 'LCA', 'sandybrown', 'saddlebrown')
+        plt.title('Learning Curve: {} [m={}]'.format(data_set, m))
+        plt.show()
 
-def cluster_and_nn():
+
+def plot_learning_curve(nn, X, Y, lbl, trcolor='darkorange', tecolor='navy', plot_cv=True):
+    scoring = 'accuracy'
+    train_sizes, train_scores, test_scores, = learning_curve(
+        nn, 
+        X, 
+        Y,
+        scoring=scoring,
+        cv=5)
+    train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
+    test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
+    plt.plot(train_sizes, train_mean, color=trcolor,  label="[{}] training score".format(lbl))
+    if plot_cv: plt.plot(train_sizes, test_mean, color=tecolor, label="[{} ] validation score".format(lbl))
+    # plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.2, color=trcolor)
+    if plot_cv: plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.2, color=tecolor)
+    plt.xlabel("Training Set Size"), plt.ylabel(scoring), plt.legend(loc="best")
+
+def cluster_and_nn(X, Y):
     print('Clustering data and running the neural network...')
 
 
-def reduce_and_nn():
-    print('Applying dimension reduction and running the neural network...')
+
+
 
 
 
@@ -389,20 +437,20 @@ if __name__ == "__main__":
     do_reduction = args.pca or args.ica or args.rca or args.kpca
     do_nn = args.nn
 
-    xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
+    X, Y = use_data_set()
 
-    if do_clustering and not do_reduction:
+    if do_clustering and not do_reduction and not do_nn:
         # Only do clustering
         cluster(X, Y)
-    if do_reduction and not do_clustering:
+    if do_reduction and not do_clustering and not do_nn:
         # Only do reduction
         dim_reduce(X, Y)
-    if do_clustering and do_reduction:
+    if do_clustering and do_reduction and not do_nn:
         # Do both clustering and reduction
         cluster_and_reduce(X, Y)
     if do_reduction and do_nn and not do_clustering:
         # Run a nn on the reduced dimensions
-        reduce_and_nn()
+        reduce_and_nn(X, Y)
     if do_clustering and do_nn and not do_reduction:
         # Run a nn on the clusted data as if it were dim reduction
-        cluster_and_nn()
+        cluster_and_nn(X, Y)
