@@ -26,7 +26,7 @@ def onehotencode(df, cols_to_encode):
     return df, None
 
 
-def split(x, y, test_size):
+def split(x, y, test_size=0.33):
     return train_test_split(x, y, test_size=test_size)
 
 

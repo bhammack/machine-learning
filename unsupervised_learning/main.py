@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from pdb import set_trace
+import time
 #
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import KMeans
@@ -234,8 +235,8 @@ def cluster_and_reduce(X, Y):
     print('Reducing then clustering the data...')
     # xtrain, xtest, ytrain, ytest, X, Y = use_data_set()
     num_clusters = range(2, 15)
-    dims = [10, 15, 20, 25, 30, 40, 50, 55, 60]
-    # dims = [50]
+    # dims = [10, 15, 20, 25, 30, 40, 50, 55, 60]
+    dims = [50]
     # visualizations of all data in two dimensions
     if args.visualize and args.kmeans:
         m = 2
@@ -244,10 +245,18 @@ def cluster_and_reduce(X, Y):
         rca = GaussianRandomProjection(n_components=m)
         lda = LinearDiscriminantAnalysis(n_components=m)
         #
+        start = time.time()
         X_pca = pca.fit_transform(X)
+        print('PCA fit took {} seconds...'.format(time.time() - start))
+        start = time.time()
         X_ica = ica.fit_transform(X)
+        print('ICA fit took {} seconds...'.format(time.time() - start))
+        start = time.time()
         X_rca = rca.fit_transform(X)
+        print('RCA fit took {} seconds...'.format(time.time() - start))
+        start = time.time()
         X_lda = lda.fit_transform(X, Y)
+        print('LDA fit took {} seconds...'.format(time.time() - start))
         #
         k = 3
         clustering = use_clustering_algo(k)
@@ -291,10 +300,18 @@ def cluster_and_reduce(X, Y):
             rca = GaussianRandomProjection(n_components=m)
             lda = LinearDiscriminantAnalysis(n_components=m)
             #
+            start = time.time()
             X_pca = pca.fit_transform(X)
+            print('PCA time to fit {} features: {} seconds...'.format(m, time.time() - start))
+            start = time.time()
             X_ica = ica.fit_transform(X)
+            print('ICA time to fit {} features: {} seconds...'.format(m, time.time() - start))
+            start = time.time()
             X_rca = rca.fit_transform(X)
+            print('RCA time to fit {} features: {} seconds...'.format(m, time.time() - start))
+            start = time.time()
             X_lda = lda.fit_transform(X, Y)
+            print('LDA time to fit {} features: {} seconds...'.format(m, time.time() - start))
             #
             distortions = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
             silhouettes = {'PCA': [], 'ICA': [], 'RCA': [], 'LDA': []}
@@ -395,20 +412,42 @@ def plot_learning_curve(nn, X, Y, lbl, trcolor='darkorange', tecolor='navy', plo
     train_mean, train_std = np.mean(train_scores, axis=1), np.std(train_scores, axis=1)
     test_mean, test_std = np.mean(test_scores, axis=1), np.std(test_scores, axis=1)
     plt.plot(train_sizes, train_mean, color=trcolor,  label="[{}] training score".format(lbl))
-    if plot_cv: plt.plot(train_sizes, test_mean, color=tecolor, label="[{} ] validation score".format(lbl))
+    if plot_cv: plt.plot(train_sizes, test_mean, color=tecolor, label="[{}] validation score".format(lbl))
     # plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=0.2, color=trcolor)
     if plot_cv: plt.fill_between(train_sizes, test_mean - test_std, test_mean + test_std, alpha=0.2, color=tecolor)
     plt.xlabel("Training Set Size"), plt.ylabel(scoring), plt.legend(loc="best")
 
+
 def cluster_and_nn(X, Y):
     print('Clustering data and running the neural network...')
-
-
-
-
-
-
-
+    if args.adults:
+        k = 2
+    if args.digits:
+        k = 10
+    print('Using {} clusters...'.format(k))
+    # X = xtest
+    # Y = ytest
+    km = KMeans(n_clusters=k)
+    em = GaussianMixture(n_components=k)
+    #
+    km_clusters = km.fit_predict(X)
+    # km.fit(xtrain)
+    em_clusters = em.fit_predict(X)
+    # em.fit(xtrain)
+    # set_trace()
+    #
+    nn = MLPClassifier(hidden_layer_sizes=(50, 50, 50))
+    nn_kmeans = MLPClassifier(hidden_layer_sizes=(50, 50, 50))
+    nn_em = MLPClassifier(hidden_layer_sizes=(50, 50, 50))
+    #
+    plot_learning_curve(nn, X, Y, 'control', 'blue', 'navy')
+    #nn_kmeans.fit(KMeans(n_clusters=k).)
+    if args.kmeans: plot_learning_curve(nn_kmeans, km_clusters.reshape(-1, 1), Y, 'k-means', 'green', 'darkgreen')
+    # em doesn't include a transform method so we use the predict_proba instead
+    # https://github.com/scikit-learn/scikit-learn/issues/7743
+    if args.em: plot_learning_curve(nn_em, em_clusters.reshape(-1, 1), Y, 'em', 'violet', 'darkviolet')
+    plt.title('Learning Curve: {} [k={}]'.format(data_set, k))
+    plt.show()
 
 
 if __name__ == "__main__":
