@@ -1,6 +1,4 @@
 
-import clustering
-import reduction
 import sys
 from data import adults, digits, split
 import argparse
