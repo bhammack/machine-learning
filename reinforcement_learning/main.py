@@ -3,7 +3,10 @@ import sys
 import argparse
 import numpy as np
 from pdb import set_trace
+import itertools
+from collections import defaultdict
 import matplotlib.pyplot as plt
+import time
 #
 import gym
 from gym import utils
@@ -20,6 +23,7 @@ from blackjack import BlackjackEnv
 def get_score(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
     print('Scoring the policy...')
+    print(policy)
     misses = 0
     steps_list = []
     for episode in range(episodes):
@@ -51,6 +55,7 @@ def one_step_lookahead(env, discount, state, value_function):
         for prob, next_state, reward, done in env.P[state][action]:
             action_values[action] += prob * (reward + discount * value_function[next_state])
     return action_values
+
 
 
 
@@ -146,7 +151,7 @@ def value_iteration(env):
             # TODO: check this section. why am I comparing i to a fixed iteration size?
             if i > 1000: 
                 if sum(stateValue) - sum(newStateValue) < SMALL:   # if there is negligible difference break the loop
-                    print('Finding value function took {} iterations'.format(i))
+                    # print('Finding value function took {} iterations'.format(i))
                     break
             else:
                 stateValue = newStateValue.copy()
@@ -169,8 +174,128 @@ def value_iteration(env):
     return policy
 
 
-def q_learner():
-    pass
+
+def make_epsilon_greedy_policy(Q, epsilon, nA):
+    """
+    Creates an epsilon-greedy policy based on a given Q-function and epsilon.
+    
+    Args:
+        Q: A dictionary that maps from state -> action-values.
+            Each value is a numpy array of length nA (see below)
+        epsilon: The probability to select a random action. Float between 0 and 1.
+        nA: Number of actions in the environment.
+    
+    Returns:
+        A function that takes the observation as an argument and returns
+        the probabilities for each action in the form of a numpy array of length nA.
+    
+    """
+    def policy_fn(observation):
+        A = np.ones(nA, dtype=float) * epsilon / nA
+        best_action = np.argmax(Q[observation])
+        A[best_action] += (1.0 - epsilon)
+        return A
+    return policy_fn
+
+
+
+# https://github.com/dennybritz/reinforcement-learning/blob/master/TD/Q-Learning%20Solution.ipynb
+def q_learning(env, num_episodes, discount_factor=1.0, alpha=0.5, epsilon=0.1):
+    """
+    Q-Learning algorithm: Off-policy TD control. Finds the optimal greedy policy
+    while following an epsilon-greedy policy
+    
+    Args:
+        env: OpenAI environment.
+        num_episodes: Number of episodes to run for.
+        discount_factor: Gamma discount factor.
+        alpha: TD learning rate.
+        epsilon: Chance to sample a random action. Float between 0 and 1.
+    
+    Returns:
+        A tuple (Q, episode_lengths).
+        Q is the optimal action-value function, a dictionary mapping state -> action values.
+        stats is an EpisodeStats object with two numpy arrays for episode_lengths and episode_rewards.
+    """
+    
+    # The final action-value function.
+    # A nested dictionary that maps state -> (action -> action-value).
+    Q = defaultdict(lambda: np.zeros(env.action_space.n))
+
+    # Keeps track of useful statistics
+    # stats = plotting.EpisodeStats(episode_lengths=np.zeros(num_episodes), episode_rewards=np.zeros(num_episodes))    
+    stats = None
+
+
+    # The policy we're following
+    policy = make_epsilon_greedy_policy(Q, epsilon, env.action_space.n)
+    for i_episode in range(num_episodes):
+        # print(Q)
+        # Print out which episode we're on, useful for debugging.
+        if (i_episode + 1) % 100 == 0:
+            print("\rEpisode {}/{}.".format(i_episode + 1, num_episodes), end="")
+            sys.stdout.flush()
+        
+        # Reset the environment and pick the first action
+        state = env.reset()
+        
+        # One step in the environment
+        # total_reward = 0.0
+        for t in itertools.count():
+            # Take a step
+            action_probs = policy(state)
+            action = np.random.choice(np.arange(len(action_probs)), p=action_probs)
+            next_state, reward, done, _ = env.step(action)
+
+            # Update statistics
+            # stats.episode_rewards[i_episode] += reward
+            # stats.episode_lengths[i_episode] = t
+            
+            # TD Update
+            best_next_action = np.argmax(Q[next_state])    
+            td_target = reward + discount_factor * Q[next_state][best_next_action]
+            td_delta = td_target - Q[state][action]
+            Q[state][action] += alpha * td_delta
+                
+            if done:
+                break
+                
+            state = next_state
+    
+    return Q, stats
+
+
+def q_learning_2(env, epsilon=0.9, lr_rate=0.81, gamma=0.96, max_steps=100, total_episodes=10000):
+    # https://medium.com/swlh/introduction-to-reinforcement-learning-coding-q-learning-part-3-9778366a41c0
+    # https://www.learndatasci.com/tutorials/reinforcement-q-learning-scratch-python-openai-gym/
+
+    Q = np.zeros((env.observation_space.n, env.action_space.n))
+    # Start
+    for episode in range(total_episodes):
+        state = env.reset()
+        t = 0
+        
+        while t < max_steps:
+            # env.render()
+
+            # Choose an action
+            action = 0
+            if np.random.uniform(0, 1) < epsilon:
+                action = env.action_space.sample() # take a random action
+            else:
+                action = np.argmax(Q[state, :]) # take the Q-learned action
+
+            # step into that action
+            state2, reward, done, info = env.step(action)  
+            predict = Q[state, action]
+            target = reward + gamma * np.max(Q[state2, :])
+            Q[state, action] = Q[state, action] + lr_rate * (target - predict)
+            state = state2
+            t += 1
+            if done:
+                break
+            # time.sleep(0.1)
+    return Q
 
 
 def main():
@@ -179,13 +304,18 @@ def main():
     if args.blackjack: env = BlackjackEnv()
     if args.value:
         policy = value_iteration(env)
-        print(policy)
         get_score(env, policy)
     if args.policy:
         policy = policy_iteration(env)
         # reshape the policy to a 1d array
         policy = np.reshape(np.argmax(policy, axis=1), [env.nS])
-        print(policy)
+        get_score(env, policy)
+    if args.q:
+        # Q, stats = q_learning(env, 10000)
+        Q = q_learning_2(env)
+        # The optimal policy for Q learning is the argmax action with probability 1 - epsilon.
+        policy = np.reshape(np.argmax(Q, axis=1), [env.nS])
+        # set_trace()
         get_score(env, policy)
 
 
