@@ -14,10 +14,10 @@ from gym.envs.toy_text import discrete
 # frozen lake
 from frozen_lake import FrozenLakeEnv
 from blackjack import BlackjackEnv
+from toh import TohEnv
 
 # Great description of algorithms:
 # https://stackoverflow.com/questions/37370015/what-is-the-difference-between-value-iteration-and-policy-iteration
-
 
 
 def get_score(env, policy, episodes=1000):
@@ -55,8 +55,6 @@ def one_step_lookahead(env, discount, state, value_function):
         for prob, next_state, reward, done in env.P[state][action]:
             action_values[action] += prob * (reward + discount * value_function[next_state])
     return action_values
-
-
 
 
 def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
@@ -128,10 +126,18 @@ def policy_iteration(env, max_iterations=100000, discount=0.9):
             return policy
 
 
-def value_iteration(env):
-    """Find the value function for the environment, then extract the policy."""
+def get_policy(env, value_function, discount=0.9):
+        """Get the policy associated with the utilities of the best actions, computed from value iteration."""
+        print('Extracting policy from the value function...')
+        policy = [0 for i in range(env.nS)]
+        for state in range(env.nS):
+            action_values = one_step_lookahead(env, discount, state, value_function)
+            best_action = np.argmax(np.asarray(action_values))
+            policy[state] = best_action
+        return policy
 
-    def find_value_function(env, max_iterations=100000, discount=0.9):
+
+def find_value_function(env, max_iterations=100000, discount=0.9):
         """Performs value iteration on the environment to compute the value function."""
         print('Computing the optimal value function...')
         # For a given state, calculate the state-action values for all possible actions from that state.
@@ -158,38 +164,40 @@ def value_iteration(env):
         return stateValue 
 
 
-    def get_policy(env, stateValue, discount=0.9):
-        """Get the policy associated with the utilities of the best actions, computed from value iteration."""
-        print('Extracting policy from the value function...')
-        policy = [0 for i in range(env.nS)]
-        for state in range(env.nS):
-            action_values = one_step_lookahead(env, discount, state, stateValue)
-            best_action = np.argmax(np.asarray(action_values))
-            policy[state] = best_action
-        return policy
-
-
+def value_iteration(env):
+    """Find the value function for the environment, then extract the policy."""
     state_utilities = find_value_function(env)
     policy = get_policy(env, state_utilities)
     return policy
 
 
-
-def q_learning(env, epsilon=0.9, lr_rate=0.81, gamma=0.96, max_steps=100, total_episodes=10000):
+def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, total_episodes=10000):
+    """
+    epsilon - exploration/exploitation rate
+    lr_rate - learning rate
+    discount - discounted rate
+    """
     # https://medium.com/swlh/introduction-to-reinforcement-learning-coding-q-learning-part-3-9778366a41c0
     # https://www.learndatasci.com/tutorials/reinforcement-q-learning-scratch-python-openai-gym/
+    # https://deeplizard.com/learn/video/QK_PP_2KgGE
 
+    min_exploration_rate = 0
+    max_exploration_rate = 1
+    exploration_decay_rate = 0.001
+
+    # create the empty q table
     Q = np.zeros((env.observation_space.n, env.action_space.n))
-    # Start
+    # https://deeplizard.com/learn/video/HGeI30uATws
+    rewards_all_episodes = []
     for episode in range(total_episodes):
         state = env.reset()
-        t = 0
-        
-        while t < max_steps:
+        done = False
+        rewards_current_episode = 0
+        # t = 0
+        for t in range(max_steps):
             # env.render()
 
-            # Choose an action
-            action = 0
+            # Exploration-exploitation tradeoff. Chose a random action, or the learned action.
             if np.random.uniform(0, 1) < epsilon:
                 action = env.action_space.sample() # take a random action
             else:
@@ -197,13 +205,23 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, gamma=0.96, max_steps=100, total_
 
             # step into that action
             state2, reward, done, info = env.step(action)  
+
+            # Update the q-table
             predict = Q[state, action]
-            target = reward + gamma * np.max(Q[state2, :])
+            target = reward + discount * np.max(Q[state2, :])
             Q[state, action] = Q[state, action] + lr_rate * (target - predict)
             state = state2
-            t += 1
+            rewards_current_episode += reward 
             if done:
                 break
+        
+        # Sum the rewards of all episodes.
+        rewards_all_episodes.append(rewards_current_episode)
+
+        # update the exploration rate epsilon by have it exponentially decrease from 1 to 0
+        epsilon = min_exploration_rate + \
+            (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
+
             # time.sleep(0.1)
     return Q
 
