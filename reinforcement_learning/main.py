@@ -23,6 +23,7 @@ from toh import TohEnv
 def get_score(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
     print('Scoring the policy...')
+    # print_policy(policy)
     print(policy)
     misses = 0
     steps_list = []
@@ -219,17 +220,25 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
         rewards_all_episodes.append(rewards_current_episode)
 
         # update the exploration rate epsilon by have it exponentially decrease from 1 to 0
-        epsilon = min_exploration_rate + \
-            (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
+        # epsilon = min_exploration_rate + \
+        #     (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
 
             # time.sleep(0.1)
     return Q
+
+
+def print_policy(policy):
+    """Print the frozen lake policy."""
+    FROZEN_LAKE_ACTIONS = ['←', '↓', '→', '↑']
+    print_list = list(map(lambda i: FROZEN_LAKE_ACTIONS[i], policy))
+    print(np.reshape(print_list, [8, 8]))
 
 
 def main():
     env = None
     if args.frozenlake: env = FrozenLakeEnv(map_name='8x8')
     if args.blackjack: env = BlackjackEnv()
+    if args.tower: env = TohEnv()
     if args.value:
         policy = value_iteration(env)
         get_score(env, policy)
@@ -251,6 +260,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Select an experiment to run')
     parser.add_argument('--frozenlake', action='store_true', help='Use the Frozen Lake gridworld problem')
     parser.add_argument('--blackjack', action='store_true', help='Use the Blackjack problem')
+    parser.add_argument('--tower', action='store_true', help='Use the Tower of Hanoi problem')
     #
     parser.add_argument('--value', action='store_true', help='Solve using value iteration')
     parser.add_argument('--policy', action='store_true', help='Solve using policy iteration')
