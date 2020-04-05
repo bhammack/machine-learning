@@ -23,8 +23,9 @@ from toh import TohEnv
 def get_score(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
     print('Scoring the policy...')
-    # print_policy(policy)
-    print(policy)
+    set_trace()
+    print_policy(policy)
+    # print(policy)
     misses = 0
     steps_list = []
     for episode in range(episodes):
@@ -228,11 +229,16 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
 
 
 def print_policy(policy):
-    """Print the frozen lake policy."""
-    FROZEN_LAKE_ACTIONS = ['←', '↓', '→', '↑']
-    print_list = list(map(lambda i: FROZEN_LAKE_ACTIONS[i], policy))
-    print(np.reshape(print_list, [8, 8]))
-
+    """Print the policy in a nice format."""
+    if args.lake:
+        FROZEN_LAKE_ACTIONS = ['←', '↓', '→', '↑']
+        print_list = list(map(lambda i: FROZEN_LAKE_ACTIONS[i], policy))
+        print(np.reshape(print_list, [8, 8]))
+    if args.tower:
+        TOWER_ACTIONS = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
+        print_list = list(map(lambda x: 'Move disk from tower {} to tower {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
+        for action in print_list:
+            print(action)
 
 def main():
     env = None
@@ -260,7 +266,7 @@ def main():
         # Q, stats = q_learning(env, 10000)
         Q = q_learning(env)
         # The optimal policy for Q learning is the argmax action with probability 1 - epsilon.
-        policy = np.reshape(np.argmax(Q, axis=1), [env.nS])
+        policy = np.reshape(np.argmax(Q, axis=1), [env.nS]).tolist()
         # set_trace()
         get_score(env, policy)
 
