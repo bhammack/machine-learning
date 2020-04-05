@@ -13,12 +13,12 @@ from gym import utils
 from gym.envs.toy_text import discrete
 # frozen lake
 from frozen_lake import FrozenLakeEnv
-from blackjack import BlackjackEnv
 from toh import TohEnv
 
 # Great description of algorithms:
 # https://stackoverflow.com/questions/37370015/what-is-the-difference-between-value-iteration-and-policy-iteration
 
+# env.nS = env.observation_space.n
 
 def get_score(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
@@ -62,16 +62,16 @@ def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
     # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Policy%20Iteration%20Solution.ipynb
     """
     Evaluate a policy given an environment and a full description of the environment's dynamics.
-    
+
     Args:
         policy: [S, A] shaped matrix representing the policy.
         env: OpenAI env. env.P represents the transition probabilities of the environment.
             env.P[s][a] is a list of transition tuples (prob, next_state, reward, done).
-            env.nS is a number of states in the environment. 
+            env.nS is a number of states in the environment.
             env.nA is a number of actions in the environment.
         theta: We stop evaluation once our value function change is less than theta for all states.
         discount_factor: Gamma discount factor.
-    
+
     Returns:
         Vector of length env.nS representing the value function.
     """
@@ -121,7 +121,7 @@ def policy_iteration(env, max_iterations=100000, discount=0.9):
             if prev_action != best_action:
                 policy_stable = False
             policy[state] = np.eye(env.nA)[best_action] # what does eye do?
-            
+
         if policy_stable:
             # print('Policy iteration took {} iterations'.format(i))
             return policy
@@ -143,7 +143,7 @@ def find_value_function(env, max_iterations=100000, discount=0.9):
         print('Computing the optimal value function...')
         # For a given state, calculate the state-action values for all possible actions from that state.
         # update teh value function of that state iwth the gratest state-action value.
-        # Terminate when teh difference between all new state values and old state values is small. 
+        # Terminate when teh difference between all new state values and old state values is small.
         # https://medium.com/analytics-vidhya/solving-the-frozenlake-environment-from-openai-gym-using-value-iteration-5a078dffe438
         # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Value%20Iteration%20Solution.ipynb
         SMALL = 1e-04
@@ -156,13 +156,13 @@ def find_value_function(env, max_iterations=100000, discount=0.9):
                 newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
 
             # TODO: check this section. why am I comparing i to a fixed iteration size?
-            if i > 1000: 
+            if i > 1000:
                 if sum(stateValue) - sum(newStateValue) < SMALL:   # if there is negligible difference break the loop
                     # print('Finding value function took {} iterations'.format(i))
                     break
             else:
                 stateValue = newStateValue.copy()
-        return stateValue 
+        return stateValue
 
 
 def value_iteration(env):
@@ -205,17 +205,17 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
                 action = np.argmax(Q[state, :]) # take the Q-learned action
 
             # step into that action
-            state2, reward, done, info = env.step(action)  
+            state2, reward, done, info = env.step(action)
 
             # Update the q-table
             predict = Q[state, action]
             target = reward + discount * np.max(Q[state2, :])
             Q[state, action] = Q[state, action] + lr_rate * (target - predict)
             state = state2
-            rewards_current_episode += reward 
+            rewards_current_episode += reward
             if done:
                 break
-        
+
         # Sum the rewards of all episodes.
         rewards_all_episodes.append(rewards_current_episode)
 
@@ -236,9 +236,18 @@ def print_policy(policy):
 
 def main():
     env = None
-    if args.frozenlake: env = FrozenLakeEnv(map_name='8x8')
-    if args.blackjack: env = BlackjackEnv()
-    if args.tower: env = TohEnv()
+
+    # environment selection
+    if args.lake:
+        env = FrozenLakeEnv(map_name='8x8')
+    if args.tower:
+        init = ((5, 4, 3, 2, 1, 0), (), ())
+        goal = ((), (), (5, 4, 3, 2, 1, 0))
+        env = TohEnv(initial_state=init, goal_state=goal, noise=0)
+
+    print('Number of states: {}'.format(env.nS))
+
+    # solver selection
     if args.value:
         policy = value_iteration(env)
         get_score(env, policy)
@@ -258,8 +267,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Select an experiment to run')
-    parser.add_argument('--frozenlake', action='store_true', help='Use the Frozen Lake gridworld problem')
-    parser.add_argument('--blackjack', action='store_true', help='Use the Blackjack problem')
+    parser.add_argument('--lake', action='store_true', help='Use the Frozen Lake gridworld problem')
     parser.add_argument('--tower', action='store_true', help='Use the Tower of Hanoi problem')
     #
     parser.add_argument('--value', action='store_true', help='Solve using value iteration')
