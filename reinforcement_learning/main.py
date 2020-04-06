@@ -11,7 +11,7 @@ import time
 import gym
 from gym import utils
 from gym.envs.toy_text import discrete
-# frozen lake
+#
 from frozen_lake import FrozenLakeEnv
 from toh import TohEnv
 
@@ -20,13 +20,9 @@ from toh import TohEnv
 
 # env.nS = env.observation_space.n
 
-def get_score(env, policy, episodes=1000):
+def score_frozen_lake(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
     print('Scoring the policy...')
-    print(policy)
-    # set_trace()
-    # print_policy(policy)
-    # print(policy)
     misses = 0
     steps_list = []
     for episode in range(episodes):
@@ -50,6 +46,20 @@ def get_score(env, policy, episodes=1000):
     print('----------------------------------------------')
 
 
+def score_tower_of_hanoi(env, policy, episodes=1000):
+    """Run the policy on the environment, * episodes."""
+    print('Scoring the policy...')
+    for episode in range(episodes):
+        obs = env.reset()
+        while True:
+            action = policy[obs]
+            new_obs, reward, done, _ = env.step(action)
+            if done:
+                break
+            else:
+                break
+
+
 def one_step_lookahead(env, discount, state, value_function):
     """Calculate the value of all actions for a given state."""
     # https://gist.github.com/persiyanov/334f64ca14f7405f5b3c7372fecf2857
@@ -62,24 +72,11 @@ def one_step_lookahead(env, discount, state, value_function):
 
 def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
     # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Policy%20Iteration%20Solution.ipynb
-    """
-    Evaluate a policy given an environment and a full description of the environment's dynamics.
-
-    Args:
-        policy: [S, A] shaped matrix representing the policy.
-        env: OpenAI env. env.P represents the transition probabilities of the environment.
-            env.P[s][a] is a list of transition tuples (prob, next_state, reward, done).
-            env.nS is a number of states in the environment.
-            env.nA is a number of actions in the environment.
-        theta: We stop evaluation once our value function change is less than theta for all states.
-        discount_factor: Gamma discount factor.
-
-    Returns:
-        Vector of length env.nS representing the value function.
-    """
     # Start with a random (all 0) value function
     V = np.zeros(env.nS)
+    i = 0
     while True:
+        i += 1
         delta = 0
         # For each state, perform a "full backup"
         for s in range(env.nS):
@@ -87,7 +84,7 @@ def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
             # Look at the possible next actions
             for a, action_prob in enumerate(policy[s]):
                 # For each action, look at the possible next states...
-                for  prob, next_state, reward, done in env.P[s][a]:
+                for prob, next_state, reward, done in env.P[s][a]:
                     # Calculate the expected value
                     v += action_prob * prob * (reward + discount_factor * V[next_state])
             # How much our value function changed (across any states)
@@ -96,81 +93,80 @@ def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
         # Stop evaluating once our value function change is below a threshold
         if delta < theta:
             break
+    print('> policy eval convergence: {} iterations'.format(i))
     return np.array(V)
 
 
 def policy_iteration(env, max_iterations=100000, discount=0.9):
     # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Policy%20Iteration%20Solution.ipynb
-    # start with a random policy
-    # evaluate the policy
-    print('Performing policy iteration...')
-
-    # values vector, also known as V
     policy = np.ones([env.nS, env.nA]) / env.nA
     # This algorithm uses a policy as a 2d vector of states and actions, NOT A 1D VECTOR
     i = 0
+    start = time.time()
     while True:
-
+        i += 1
         # Evalute the policy
-        value_function = evaluate_policy(env, policy)
-
+        value_function = evaluate_policy(env, policy, discount_factor=discount)
         # Improve the policy
         policy_stable = True
         for state in range(env.nS):
             prev_action = np.argmax(policy[state])
             best_action = np.argmax(one_step_lookahead(env, discount, state, value_function))
-
             # Greedily update the policy
             if prev_action != best_action:
                 policy_stable = False
             policy[state] = np.eye(env.nA)[best_action] # what does eye do?
-
         if policy_stable:
-            print('Policy iteration took {} iterations'.format(i))
-            return policy
-        i += 1
+            break
+    print('> PI convergence: {} iterations'.format(i))
+    print('> duration: {} secs'.format(time.time() - start))
+    return policy
             
 
 
-def get_policy(env, value_function, discount=0.9):
-        """Get the policy associated with the utilities of the best actions, computed from value iteration."""
-        print('Extracting policy from the value function...')
-        policy = [0 for i in range(env.nS)]
-        for state in range(env.nS):
-            action_values = one_step_lookahead(env, discount, state, value_function)
-            best_action = np.argmax(np.asarray(action_values))
-            policy[state] = best_action
-        return policy
+def compute_policy(env, value_function, discount=0.9):
+    """Get the policy associated with the utilities of the best actions, computed from value iteration."""
+    # print('Extracting policy from the value function...')
+    policy = [0 for i in range(env.nS)]
+    for state in range(env.nS):
+        action_values = one_step_lookahead(env, discount, state, value_function)
+        best_action = np.argmax(np.asarray(action_values))
+        policy[state] = best_action
+    return policy
 
 
-def find_value_function(env, max_iterations=100000, discount=0.9, theta=1e-6):
-        """Performs value iteration on the environment to compute the value function."""
-        print('Computing the optimal value function...')
-        # For a given state, calculate the state-action values for all possible actions from that state.
-        # update teh value function of that state iwth the gratest state-action value.
-        # Terminate when teh difference between all new state values and old state values is small.
-        # https://medium.com/analytics-vidhya/solving-the-frozenlake-environment-from-openai-gym-using-value-iteration-5a078dffe438
-        # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Value%20Iteration%20Solution.ipynb
-        stateValue = [0 for i in range(env.nS)]
-        newStateValue = stateValue.copy()
-        for i in range(max_iterations):
-            for state in range(env.nS): # For every state in the discrete space
-                action_values = one_step_lookahead(env, discount, state, stateValue)
-                best_action = np.argmax(np.asarray(action_values)) # find the action with the maximum value
-                newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
-            # if there is negligible difference break the loop
-            if abs(sum(stateValue) - sum(newStateValue)) < theta:   
-                print('Finding value function took {} iterations'.format(i))
-                break
-            else:
-                stateValue = newStateValue.copy()
-        return stateValue
+def compute_value_function(env, max_iterations=100000, discount=0.9, theta=1e-6):
+    """Performs value iteration on the environment to compute the value function."""
+    # For a given state, calculate the state-action values for all possible actions from that state.
+    # update teh value function of that state iwth the gratest state-action value.
+    # Terminate when teh difference between all new state values and old state values is small.
+    # https://medium.com/analytics-vidhya/solving-the-frozenlake-environment-from-openai-gym-using-value-iteration-5a078dffe438
+    # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Value%20Iteration%20Solution.ipynb
+    stateValue = [0 for i in range(env.nS)]
+    newStateValue = stateValue.copy()
+    i = 0
+    while True: # imply convergence, lol
+        i += 1
+        for state in range(env.nS): # For every state in the discrete space
+            action_values = one_step_lookahead(env, discount, state, stateValue)
+            best_action = np.argmax(np.asarray(action_values)) # find the action with the maximum value
+            newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
+        # if there is negligible difference, break the loop
+        delta = abs(sum(stateValue) - sum(newStateValue))
+        if delta < theta:   
+            break
+        else:
+            stateValue = newStateValue.copy()
+    print('> VI convergence: {} iterations'.format(i))
+    return stateValue
 
 
-def value_iteration(env):
+def value_iteration(env, discount=0.9):
     """Find the value function for the environment, then extract the policy."""
-    state_utilities = find_value_function(env)
-    policy = get_policy(env, state_utilities)
+    start = time.time()
+    state_utilities = compute_value_function(env, discount=discount)
+    policy = compute_policy(env, state_utilities)
+    print('> duration: {} secs'.format(time.time() - start))
     return policy
 
 
@@ -192,6 +188,7 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
     Q = np.zeros((env.observation_space.n, env.action_space.n))
     # https://deeplizard.com/learn/video/HGeI30uATws
     rewards_all_episodes = []
+    start = time.time()
     for episode in range(total_episodes):
         state = env.reset()
         done = False
@@ -226,6 +223,7 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
         #     (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
 
             # time.sleep(0.1)
+    print('> duration: {} secs'.format(time.time() - start))
     return Q
 
 
@@ -240,7 +238,15 @@ def print_policy(policy):
         print_list = list(map(lambda x: 'Tower {} -> tower {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
         # for action in print_list:
         #     print(action)
-        print(print_list)
+        # print(print_list)
+        print(policy)
+
+
+def policy_differences(vi, pi):
+    differences = 0
+    for i in range(len(vi)):
+        if vi[i] != pi[i]: differences += 1
+    return differences
 
 
 def main():
@@ -250,30 +256,42 @@ def main():
     if args.lake:
         env = FrozenLakeEnv(map_name='8x8')
     if args.tower:
-        # init = ((5, 4, 3, 2, 1, 0), (), ())
-        init = ((2, 1, 0), (), ())
-        # goal = ((), (), (5, 4, 3, 2, 1, 0))
-        goal = ((), (), (2, 1, 0))
+        init = ((5, 4, 3, 2, 1, 0), (), ())
+        # init = ((2, 1, 0), (), ())
+        goal = ((), (), (5, 4, 3, 2, 1, 0))
+        # goal = ((), (), (2, 1, 0))
         env = TohEnv(initial_state=init, goal_state=goal, noise=0.3)
 
-    print('Number of states: {}'.format(env.nS))
+    print('> env number of states: {}'.format(env.nS))
 
     # solver selection
-    if args.value:
-        policy = value_iteration(env)
-        get_score(env, policy)
-    if args.policy:
-        policy = policy_iteration(env)
-        # reshape the policy to a 1d array
-        policy = np.reshape(np.argmax(policy, axis=1), [env.nS])
-        get_score(env, policy)
+    discount = args.discount
+    print('> discount factor: {}'.format(discount))
+    if args.vi:
+        vi_policy = value_iteration(env, discount=discount)
+        policy = vi_policy
+        print_policy(vi_policy)
+    if args.pi:
+        pi_policy = policy_iteration(env, discount=discount) # reshape to 1d array
+        pi_policy = np.reshape(np.argmax(pi_policy, axis=1), [env.nS])
+        policy = pi_policy
+        print_policy(pi_policy)
+    if args.vi and args.pi:
+        # Compare the two policies
+        print('VI and PI policy differences: {}'.format(policy_differences(vi_policy, pi_policy)))
     if args.q:
         # Q, stats = q_learning(env, 10000)
         Q = q_learning(env)
         # The optimal policy for Q learning is the argmax action with probability 1 - epsilon.
-        policy = np.reshape(np.argmax(Q, axis=1), [env.nS]).tolist()
+        q_policy = np.reshape(np.argmax(Q, axis=1), [env.nS]).tolist()
+        policy = q_policy
+        print_policy(q_policy)
         # set_trace()
-        get_score(env, policy)
+    if args.lake:
+        score_frozen_lake(env, policy)
+    if args.tower:
+        score_tower_of_hanoi(env, policy)
+
 
 
 if __name__ == "__main__":
@@ -281,10 +299,12 @@ if __name__ == "__main__":
     parser.add_argument('--lake', action='store_true', help='Use the Frozen Lake gridworld problem')
     parser.add_argument('--tower', action='store_true', help='Use the Tower of Hanoi problem')
     #
-    parser.add_argument('--value', action='store_true', help='Solve using value iteration')
-    parser.add_argument('--policy', action='store_true', help='Solve using policy iteration')
+    parser.add_argument('--vi', action='store_true', help='Solve using value iteration')
+    parser.add_argument('--pi', action='store_true', help='Solve using policy iteration')
     parser.add_argument('--q', action='store_true', help='Solve using a Q-learner')
     #
+    parser.add_argument('--plot', action='store_true', help='Create plots')
+    parser.add_argument('--discount', type=float, default=0.9, help='Discount/gamma value to use')
     args = parser.parse_args()
     if len(sys.argv) == 1:
         parser.print_help()
