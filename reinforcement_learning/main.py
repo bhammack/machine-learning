@@ -23,8 +23,9 @@ from toh import TohEnv
 def get_score(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
     print('Scoring the policy...')
-    set_trace()
-    print_policy(policy)
+    print(policy)
+    # set_trace()
+    # print_policy(policy)
     # print(policy)
     misses = 0
     steps_list = []
@@ -107,6 +108,7 @@ def policy_iteration(env, max_iterations=100000, discount=0.9):
     # values vector, also known as V
     policy = np.ones([env.nS, env.nA]) / env.nA
     # This algorithm uses a policy as a 2d vector of states and actions, NOT A 1D VECTOR
+    i = 0
     while True:
 
         # Evalute the policy
@@ -124,8 +126,10 @@ def policy_iteration(env, max_iterations=100000, discount=0.9):
             policy[state] = np.eye(env.nA)[best_action] # what does eye do?
 
         if policy_stable:
-            # print('Policy iteration took {} iterations'.format(i))
+            print('Policy iteration took {} iterations'.format(i))
             return policy
+        i += 1
+            
 
 
 def get_policy(env, value_function, discount=0.9):
@@ -139,7 +143,7 @@ def get_policy(env, value_function, discount=0.9):
         return policy
 
 
-def find_value_function(env, max_iterations=100000, discount=0.9):
+def find_value_function(env, max_iterations=100000, discount=0.9, theta=1e-6):
         """Performs value iteration on the environment to compute the value function."""
         print('Computing the optimal value function...')
         # For a given state, calculate the state-action values for all possible actions from that state.
@@ -147,7 +151,6 @@ def find_value_function(env, max_iterations=100000, discount=0.9):
         # Terminate when teh difference between all new state values and old state values is small.
         # https://medium.com/analytics-vidhya/solving-the-frozenlake-environment-from-openai-gym-using-value-iteration-5a078dffe438
         # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Value%20Iteration%20Solution.ipynb
-        SMALL = 1e-04
         stateValue = [0 for i in range(env.nS)]
         newStateValue = stateValue.copy()
         for i in range(max_iterations):
@@ -155,12 +158,10 @@ def find_value_function(env, max_iterations=100000, discount=0.9):
                 action_values = one_step_lookahead(env, discount, state, stateValue)
                 best_action = np.argmax(np.asarray(action_values)) # find the action with the maximum value
                 newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
-
-            # TODO: check this section. why am I comparing i to a fixed iteration size?
-            if i > 1000:
-                if sum(stateValue) - sum(newStateValue) < SMALL:   # if there is negligible difference break the loop
-                    # print('Finding value function took {} iterations'.format(i))
-                    break
+            # if there is negligible difference break the loop
+            if abs(sum(stateValue) - sum(newStateValue)) < theta:   
+                print('Finding value function took {} iterations'.format(i))
+                break
             else:
                 stateValue = newStateValue.copy()
         return stateValue
@@ -236,9 +237,11 @@ def print_policy(policy):
         print(np.reshape(print_list, [8, 8]))
     if args.tower:
         TOWER_ACTIONS = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
-        print_list = list(map(lambda x: 'Move disk from tower {} to tower {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
-        for action in print_list:
-            print(action)
+        print_list = list(map(lambda x: 'Tower {} -> tower {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
+        # for action in print_list:
+        #     print(action)
+        print(print_list)
+
 
 def main():
     env = None
@@ -247,9 +250,11 @@ def main():
     if args.lake:
         env = FrozenLakeEnv(map_name='8x8')
     if args.tower:
-        init = ((5, 4, 3, 2, 1, 0), (), ())
-        goal = ((), (), (5, 4, 3, 2, 1, 0))
-        env = TohEnv(initial_state=init, goal_state=goal, noise=0)
+        # init = ((5, 4, 3, 2, 1, 0), (), ())
+        init = ((2, 1, 0), (), ())
+        # goal = ((), (), (5, 4, 3, 2, 1, 0))
+        goal = ((), (), (2, 1, 0))
+        env = TohEnv(initial_state=init, goal_state=goal, noise=0.3)
 
     print('Number of states: {}'.format(env.nS))
 
