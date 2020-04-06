@@ -70,7 +70,7 @@ def one_step_lookahead(env, discount, state, value_function):
     return action_values
 
 
-def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
+def evaluate_policy(env, policy, discount, theta):
     # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Policy%20Iteration%20Solution.ipynb
     # Start with a random (all 0) value function
     V = np.zeros(env.nS)
@@ -86,7 +86,7 @@ def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
                 # For each action, look at the possible next states...
                 for prob, next_state, reward, done in env.P[s][a]:
                     # Calculate the expected value
-                    v += action_prob * prob * (reward + discount_factor * V[next_state])
+                    v += action_prob * prob * (reward + discount * V[next_state])
             # How much our value function changed (across any states)
             delta = max(delta, np.abs(v - V[s]))
             V[s] = v
@@ -97,7 +97,7 @@ def evaluate_policy(env, policy, discount_factor=0.9, theta=1e-6):
     return np.array(V)
 
 
-def policy_iteration(env, max_iterations=100000, discount=0.9):
+def policy_iteration(env, discount=0.9, theta=1e-6):
     # https://github.com/dennybritz/reinforcement-learning/blob/master/DP/Policy%20Iteration%20Solution.ipynb
     policy = np.ones([env.nS, env.nA]) / env.nA
     # This algorithm uses a policy as a 2d vector of states and actions, NOT A 1D VECTOR
@@ -106,7 +106,7 @@ def policy_iteration(env, max_iterations=100000, discount=0.9):
     while True:
         i += 1
         # Evalute the policy
-        value_function = evaluate_policy(env, policy, discount_factor=discount)
+        value_function = evaluate_policy(env, policy, discount, theta)
         # Improve the policy
         policy_stable = True
         for state in range(env.nS):
@@ -123,8 +123,7 @@ def policy_iteration(env, max_iterations=100000, discount=0.9):
     return policy
             
 
-
-def compute_policy(env, value_function, discount=0.9):
+def compute_policy(env, value_function, discount):
     """Get the policy associated with the utilities of the best actions, computed from value iteration."""
     # print('Extracting policy from the value function...')
     policy = [0 for i in range(env.nS)]
@@ -135,7 +134,7 @@ def compute_policy(env, value_function, discount=0.9):
     return policy
 
 
-def compute_value_function(env, max_iterations=100000, discount=0.9, theta=1e-6):
+def compute_value_function(env, discount, theta):
     """Performs value iteration on the environment to compute the value function."""
     # For a given state, calculate the state-action values for all possible actions from that state.
     # update teh value function of that state iwth the gratest state-action value.
@@ -145,6 +144,7 @@ def compute_value_function(env, max_iterations=100000, discount=0.9, theta=1e-6)
     stateValue = [0 for i in range(env.nS)]
     newStateValue = stateValue.copy()
     i = 0
+    deltas = []
     while True: # imply convergence, lol
         i += 1
         for state in range(env.nS): # For every state in the discrete space
@@ -153,19 +153,21 @@ def compute_value_function(env, max_iterations=100000, discount=0.9, theta=1e-6)
             newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
         # if there is negligible difference, break the loop
         delta = abs(sum(stateValue) - sum(newStateValue))
-        if delta < theta:   
+        deltas.append(delta)
+        if delta < theta:
             break
         else:
             stateValue = newStateValue.copy()
     print('> VI convergence: {} iterations'.format(i))
+    if args.plot: plt.plot(range(i), deltas, label='delta per iteration'), plt.xlabel('Iteration'), plt.ylabel('Delta'), plt.tight_layout(), plt.show()
     return stateValue
 
 
-def value_iteration(env, discount=0.9):
+def value_iteration(env, discount=0.9, theta=1e-6):
     """Find the value function for the environment, then extract the policy."""
     start = time.time()
-    state_utilities = compute_value_function(env, discount=discount)
-    policy = compute_policy(env, state_utilities)
+    state_utilities = compute_value_function(env, discount, theta)
+    policy = compute_policy(env, state_utilities, discount)
     print('> duration: {} secs'.format(time.time() - start))
     return policy
 
