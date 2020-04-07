@@ -22,7 +22,6 @@ from toh import TohEnv
 
 def score_frozen_lake(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
-    print('Scoring the policy...')
     misses = 0
     steps_list = []
     for episode in range(episodes):
@@ -48,17 +47,31 @@ def score_frozen_lake(env, policy, episodes=1000):
 
 def score_tower_of_hanoi(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
-    print('Scoring the policy...')
+    moves_list = []
+    stuck_dict = {}
     for episode in range(episodes):
-        obs = env.reset()
+        observation = env.reset()
+        moves = 0
         while True:
-            action = policy[obs]
-            new_obs, reward, done, _ = env.step(action)
-            if done:
+            action = policy[observation]
+            old_obs = observation
+            observation, reward, done, _ = env.step(action)
+            moves += 1
+            # print(env.state_mapping[observation])
+            if done and reward == 100: # reward for final state
+                moves_list.append(moves)
                 break
-            else:
+            elif done and reward == 0 or observation == old_obs: # agent reached an invalid state and is stuck
+                if observation in stuck_dict:
+                    stuck_dict[observation] += 1 
+                else:
+                    stuck_dict[observation] = 1
                 break
-
+    print('----------------------------------------------')
+    print('The policy used on average {:.0f} moves to get the final state'.format(np.mean(moves_list)))
+    print('The policy got stuck {:.2f} % of the time'.format(sum(stuck_dict.values()) * 100/episodes, episodes))
+    print('----------------------------------------------')
+            
 
 def one_step_lookahead(env, discount, state, value_function):
     """Calculate the value of all actions for a given state."""
@@ -103,8 +116,10 @@ def policy_iteration(env, discount=0.9, theta=1e-6):
     # This algorithm uses a policy as a 2d vector of states and actions, NOT A 1D VECTOR
     i = 0
     start = time.time()
+    states_updated = []
     while True:
         i += 1
+        updates = 0
         # Evalute the policy
         value_function = evaluate_policy(env, policy, discount, theta)
         # Improve the policy
@@ -115,11 +130,14 @@ def policy_iteration(env, discount=0.9, theta=1e-6):
             # Greedily update the policy
             if prev_action != best_action:
                 policy_stable = False
+                updates += 1
             policy[state] = np.eye(env.nA)[best_action] # what does eye do?
+        states_updated.append(updates)
         if policy_stable:
             break
     print('> PI convergence: {} iterations'.format(i))
     print('> duration: {} secs'.format(time.time() - start))
+    if args.plot: plt.plot(range(i), states_updated, label='states updated per iteration'), plt.xlabel('Iteration'), plt.ylabel('# states updated'), plt.tight_layout(), plt.show()
     return policy
 
 
@@ -154,7 +172,6 @@ def compute_value_function(env, discount, theta):
             newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
             delta = max(delta, abs(newStateValue[state] - stateValue[state]))
         # if there is negligible difference, break the loop
-        # delta = abs(sum(stateValue) - sum(newStateValue))
         deltas.append(delta)
         if delta < theta:
             break
@@ -264,9 +281,10 @@ def main():
         # init = ((2, 1, 0), (), ())
         goal = ((), (), (5, 4, 3, 2, 1, 0))
         # goal = ((), (), (2, 1, 0))
-        env = TohEnv(initial_state=init, goal_state=goal, noise=0.3)
+        env = TohEnv(initial_state=init, goal_state=goal, noise=args.noise)
 
     print('> env number of states: {}'.format(env.nS))
+    print('> noise factor: {}'.format(args.noise))
 
     # solver selection
     discount = args.discount
@@ -291,6 +309,8 @@ def main():
         policy = q_policy
         print_policy(q_policy)
         # set_trace()
+
+    print('Scoring the policy...')
     if args.lake:
         score_frozen_lake(env, policy)
     if args.tower:
@@ -309,6 +329,7 @@ if __name__ == "__main__":
     #
     parser.add_argument('--plot', action='store_true', help='Create plots')
     parser.add_argument('--discount', type=float, default=0.9, help='Discount/gamma value to use')
+    parser.add_argument('--noise', type=float, default=0.1, help='Noise value for Tower of Hanoi problem')
     args = parser.parse_args()
     if len(sys.argv) == 1:
         parser.print_help()
