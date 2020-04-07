@@ -87,7 +87,7 @@ def evaluate_policy(env, policy, discount, theta):
                 for prob, next_state, reward, done in env.P[s][a]:
                     # Calculate the expected value
                     v += action_prob * prob * (reward + discount * V[next_state])
-            # How much our value function changed (across any states)
+            # How much our value function changed (across any states) over the course of this iteration.
             delta = max(delta, np.abs(v - V[s]))
             V[s] = v
         # Stop evaluating once our value function change is below a threshold
@@ -121,7 +121,7 @@ def policy_iteration(env, discount=0.9, theta=1e-6):
     print('> PI convergence: {} iterations'.format(i))
     print('> duration: {} secs'.format(time.time() - start))
     return policy
-            
+
 
 def compute_policy(env, value_function, discount):
     """Get the policy associated with the utilities of the best actions, computed from value iteration."""
@@ -144,7 +144,7 @@ def compute_value_function(env, discount, theta):
     stateValue = [0 for i in range(env.nS)]
     newStateValue = stateValue.copy()
     i = 0
-    deltas = [] 
+    deltas = []
     while True: # imply convergence, lol
         i += 1
         delta = 0
