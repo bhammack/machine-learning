@@ -144,15 +144,17 @@ def compute_value_function(env, discount, theta):
     stateValue = [0 for i in range(env.nS)]
     newStateValue = stateValue.copy()
     i = 0
-    deltas = []
+    deltas = [] 
     while True: # imply convergence, lol
         i += 1
+        delta = 0
         for state in range(env.nS): # For every state in the discrete space
             action_values = one_step_lookahead(env, discount, state, stateValue)
             best_action = np.argmax(np.asarray(action_values)) # find the action with the maximum value
             newStateValue[state] = action_values[best_action] # update the state mapping to use this best action
+            delta = max(delta, abs(newStateValue[state] - stateValue[state]))
         # if there is negligible difference, break the loop
-        delta = abs(sum(stateValue) - sum(newStateValue))
+        # delta = abs(sum(stateValue) - sum(newStateValue))
         deltas.append(delta)
         if delta < theta:
             break
