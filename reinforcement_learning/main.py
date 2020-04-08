@@ -65,7 +65,7 @@ def score_tower_of_hanoi(env, policy, episodes=1000):
             elif done and reward == 0 or observation == old_obs: # agent reached an invalid state and is stuck
             # elif done and reward == 0: # agent reached an invalid state and is stuck
                 if observation in stuck_dict:
-                    stuck_dict[observation] += 1 
+                    stuck_dict[observation] += 1
                 else:
                     stuck_dict[observation] = 1
                 break
@@ -73,7 +73,7 @@ def score_tower_of_hanoi(env, policy, episodes=1000):
     print('The policy used on average {:.0f} moves to get the final state'.format(np.mean(moves_list)))
     print('The policy got stuck {:.2f} % of the time'.format(sum(stuck_dict.values()) * 100/episodes, episodes))
     print('----------------------------------------------')
-            
+
 
 def one_step_lookahead(env, discount, state, value_function):
     """Calculate the value of all actions for a given state."""
@@ -193,62 +193,79 @@ def value_iteration(env, discount=0.9, theta=1e-6):
     return policy
 
 
-def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, total_episodes=100000):
+def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=100, total_episodes=10000):
     """
     epsilon - exploration/exploitation rate
-    lr_rate - learning rate
+    learning_rate - learning rate
     discount - discounted rate
+    max_steps = 100 (max moves the agent can make in one attempt/run/exploration)
     """
     # https://medium.com/swlh/introduction-to-reinforcement-learning-coding-q-learning-part-3-9778366a41c0
     # https://www.learndatasci.com/tutorials/reinforcement-q-learning-scratch-python-openai-gym/
     # https://deeplizard.com/learn/video/QK_PP_2KgGE
     # https://github.com/simoninithomas/Deep_reinforcement_learning_Course/blob/master/Q%20learning/FrozenLake/Q%20Learning%20with%20FrozenLake.ipynb
 
-    min_exploration_rate = 0
-    max_exploration_rate = 1
-    exploration_decay_rate = 0.001
+    min_epsilon = 0.01
+    max_epsilon = 1.0
+    decay_rate = 0.005
 
     # create the empty q table
     Q = np.zeros((env.observation_space.n, env.action_space.n))
     # https://deeplizard.com/learn/video/HGeI30uATws
-    rewards_all_episodes = []
+    rewards = []
     start = time.time()
+    terminating_states = {}
     for episode in range(total_episodes):
         if episode % 500 == 0: print('Episode: {}/{}'.format(episode, total_episodes), end="\r", flush=True)
+
         state = env.reset()
         done = False
-        rewards_current_episode = 0
-        # t = 0
-        for t in range(max_steps):
-            # env.render()
+        step = 0
+        total_rewards = 0
 
+        for step in range(max_steps):
+            # env.render()
             # Exploration-exploitation tradeoff. Chose a random action, or the learned action.
-            if np.random.uniform(0, 1) < epsilon:
-                action = env.action_space.sample() # take a random action
-            else:
+            # If this number > greater than epsilon --> exploitation (taking the biggest Q value for this state)
+            # Else doing a random choice --> exploration
+            exp_exp_tradeoff = np.random.uniform(0, 1)
+            if exp_exp_tradeoff > epsilon:
                 action = np.argmax(Q[state, :]) # take the Q-learned action
+            else:
+                action = env.action_space.sample() # take a random action
 
             # step into that action
-            state2, reward, done, info = env.step(action)
+            new_state, reward, done, info = env.step(action)
 
             # Update the q-table
             predict = Q[state, action]
-            target = reward + discount * np.max(Q[state2, :])
-            Q[state, action] = Q[state, action] + lr_rate * (target - predict)
-            state = state2
-            rewards_current_episode += reward
+            target = reward + discount * np.max(Q[new_state, :])
+            Q[state, action] = Q[state, action] + learning_rate * (target - predict)
+
+            # Set the new state
+            state = new_state
+
+            # Increase our reward earned for this step
+            total_rewards += reward
+
             if done:
+                # Log the state where we currently are that caused termination
+                if state in terminating_states:
+                    terminating_states[state] += 1
+                else:
+                    terminating_states[state] = 1
+                #set_trace()
                 break
 
-        # Sum the rewards of all episodes.
-        rewards_all_episodes.append(rewards_current_episode)
+        # Reduce epsilon (because we need less and less exploration)
+        epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay_rate * episode)
 
-        # update the exploration rate epsilon by have it exponentially decrease from 1 to 0
-        # epsilon = min_exploration_rate + \
-        #     (max_exploration_rate - min_exploration_rate) * np.exp(-exploration_decay_rate * episode)
+        # Log the rewards of all episodes.
+        rewards.append(total_rewards)
 
-            # time.sleep(0.1)
+    print("> score over time: " +  str(sum(rewards)/total_episodes))
     print('> duration: {} secs'.format(time.time() - start))
+    set_trace()
     return Q
 
 
@@ -315,13 +332,13 @@ def main():
         print(diffs)
         print('VI and PI policy differences: {}'.format(sum(diffs.values())))
     if args.q:
-        # Q, stats = q_learning(env, 10000)
         Q = q_learning(env)
         # The optimal policy for Q learning is the argmax action with probability 1 - epsilon.
         q_policy = np.reshape(np.argmax(Q, axis=1), [env.nS]).tolist()
+        set_trace()
         policy = q_policy
         print_policy(q_policy)
-        # set_trace()
+
 
     print('Scoring the policy...')
     if args.lake:
