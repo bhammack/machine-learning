@@ -17,7 +17,7 @@ from toh import TohEnv
 
 # Great description of algorithms:
 # https://stackoverflow.com/questions/37370015/what-is-the-difference-between-value-iteration-and-policy-iteration
-
+# http://webgraphviz.com/
 # env.nS = env.observation_space.n
 
 def score_frozen_lake(env, policy, episodes=1000):
@@ -59,9 +59,11 @@ def score_tower_of_hanoi(env, policy, episodes=1000):
             moves += 1
             # print(env.state_mapping[observation])
             if done and reward == 100: # reward for final state
+               #  print(moves)
                 moves_list.append(moves)
                 break
             elif done and reward == 0 or observation == old_obs: # agent reached an invalid state and is stuck
+            # elif done and reward == 0: # agent reached an invalid state and is stuck
                 if observation in stuck_dict:
                     stuck_dict[observation] += 1 
                 else:
@@ -256,17 +258,21 @@ def print_policy(policy):
         print(np.reshape(print_list, [8, 8]))
     if args.tower:
         TOWER_ACTIONS = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
-        print_list = list(map(lambda x: 'Tower {} -> tower {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
-        # for action in print_list:
-        #     print(action)
+        print_list = list(map(lambda x: '{} -> {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
+        # for i in range(len(print_list)):
+        #     print('{} [label={}]'.format(print_list[i], i))
         # print(print_list)
-        print(policy)
+        # print(print_list)
 
 
 def policy_differences(vi, pi):
-    differences = 0
+    differences = {}
     for i in range(len(vi)):
-        if vi[i] != pi[i]: differences += 1
+        if vi[i] != pi[i]:
+            if i in differences:
+                differences[i] += 1
+            else:
+                differences[i] = 1
     return differences
 
 
@@ -277,10 +283,10 @@ def main():
     if args.lake:
         env = FrozenLakeEnv(map_name='8x8')
     if args.tower:
-        init = ((5, 4, 3, 2, 1, 0), (), ())
-        # init = ((2, 1, 0), (), ())
-        goal = ((), (), (5, 4, 3, 2, 1, 0))
-        # goal = ((), (), (2, 1, 0))
+        rings = tuple(range(args.rings - 1, -1, -1))
+        print(rings)
+        init = (rings, (), ())
+        goal = ((), (), rings)
         env = TohEnv(initial_state=init, goal_state=goal, noise=args.noise)
 
     print('> env number of states: {}'.format(env.nS))
@@ -300,7 +306,9 @@ def main():
         print_policy(pi_policy)
     if args.vi and args.pi:
         # Compare the two policies
-        print('VI and PI policy differences: {}'.format(policy_differences(vi_policy, pi_policy)))
+        diffs = policy_differences(vi_policy, pi_policy)
+        print(diffs)
+        print('VI and PI policy differences: {}'.format(sum(diffs.values())))
     if args.q:
         # Q, stats = q_learning(env, 10000)
         Q = q_learning(env)
@@ -330,6 +338,8 @@ if __name__ == "__main__":
     parser.add_argument('--plot', action='store_true', help='Create plots')
     parser.add_argument('--discount', type=float, default=0.9, help='Discount/gamma value to use')
     parser.add_argument('--noise', type=float, default=0.1, help='Noise value for Tower of Hanoi problem')
+    parser.add_argument('--rings', type=int, default=6, help='Number of rings for Tower of Hanoi problem')
+    parser.add_argument('--size', type=int, default=0, help='Size of random puzzle for Frozen Lake problem')
     args = parser.parse_args()
     if len(sys.argv) == 1:
         parser.print_help()
