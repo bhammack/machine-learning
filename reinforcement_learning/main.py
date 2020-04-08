@@ -193,7 +193,7 @@ def value_iteration(env, discount=0.9, theta=1e-6):
     return policy
 
 
-def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=100, total_episodes=10000):
+def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=100, total_episodes=15000):
     """
     epsilon - exploration/exploitation rate
     learning_rate - learning rate
@@ -215,6 +215,7 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
     rewards = []
     start = time.time()
     terminating_states = {}
+    paths = []
     for episode in range(total_episodes):
         if episode % 500 == 0: print('Episode: {}/{}'.format(episode, total_episodes), end="\r", flush=True)
 
@@ -222,9 +223,10 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
         done = False
         step = 0
         total_rewards = 0
+        path = [state]
 
         for step in range(max_steps):
-            # env.render()
+            # env.render(), time.sleep(0.1)
             # Exploration-exploitation tradeoff. Chose a random action, or the learned action.
             # If this number > greater than epsilon --> exploitation (taking the biggest Q value for this state)
             # Else doing a random choice --> exploration
@@ -245,8 +247,9 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
             # Set the new state
             state = new_state
 
-            # Increase our reward earned for this step
+            # Increase our reward earned for this step and log that we visited it
             total_rewards += reward
+            path.append(state)
 
             if done:
                 # Log the state where we currently are that caused termination
@@ -260,8 +263,9 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
         # Reduce epsilon (because we need less and less exploration)
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay_rate * episode)
 
-        # Log the rewards of all episodes.
+        # Log the rewards of all episodes and paths taken
         rewards.append(total_rewards)
+        paths.append(path)
 
     print("> score over time: " +  str(sum(rewards)/total_episodes))
     print('> duration: {} secs'.format(time.time() - start))
@@ -335,7 +339,6 @@ def main():
         Q = q_learning(env)
         # The optimal policy for Q learning is the argmax action with probability 1 - epsilon.
         q_policy = np.reshape(np.argmax(Q, axis=1), [env.nS]).tolist()
-        set_trace()
         policy = q_policy
         print_policy(q_policy)
 
