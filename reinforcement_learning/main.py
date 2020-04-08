@@ -193,7 +193,7 @@ def value_iteration(env, discount=0.9, theta=1e-6):
     return policy
 
 
-def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, total_episodes=10000):
+def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, total_episodes=100000):
     """
     epsilon - exploration/exploitation rate
     lr_rate - learning rate
@@ -202,6 +202,7 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
     # https://medium.com/swlh/introduction-to-reinforcement-learning-coding-q-learning-part-3-9778366a41c0
     # https://www.learndatasci.com/tutorials/reinforcement-q-learning-scratch-python-openai-gym/
     # https://deeplizard.com/learn/video/QK_PP_2KgGE
+    # https://github.com/simoninithomas/Deep_reinforcement_learning_Course/blob/master/Q%20learning/FrozenLake/Q%20Learning%20with%20FrozenLake.ipynb
 
     min_exploration_rate = 0
     max_exploration_rate = 1
@@ -213,6 +214,7 @@ def q_learning(env, epsilon=0.9, lr_rate=0.81, discount=0.96, max_steps=100, tot
     rewards_all_episodes = []
     start = time.time()
     for episode in range(total_episodes):
+        if episode % 500 == 0: print('Episode: {}/{}'.format(episode, total_episodes), end="\r", flush=True)
         state = env.reset()
         done = False
         rewards_current_episode = 0
@@ -255,7 +257,8 @@ def print_policy(policy):
     if args.lake:
         FROZEN_LAKE_ACTIONS = ['←', '↓', '→', '↑']
         print_list = list(map(lambda i: FROZEN_LAKE_ACTIONS[i], policy))
-        print(np.reshape(print_list, [8, 8]))
+        # print(np.reshape(print_list, [8, 8]))
+        print(print_list)
     if args.tower:
         TOWER_ACTIONS = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
         print_list = list(map(lambda x: '{} -> {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
@@ -282,6 +285,8 @@ def main():
     # environment selection
     if args.lake:
         env = FrozenLakeEnv(map_name='8x8')
+        if args.size > 0:
+            env = FrozenLakeEnv(desc=None, map_name=None, size=args.size)
     if args.tower:
         rings = tuple(range(args.rings - 1, -1, -1))
         print(rings)

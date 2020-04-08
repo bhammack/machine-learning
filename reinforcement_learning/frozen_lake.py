@@ -93,9 +93,10 @@ class FrozenLakeEnv(discrete.DiscreteEnv):
 
     metadata = {'render.modes': ['human', 'ansi']}
 
-    def __init__(self, desc=None, map_name="4x4", is_slippery=True):
-        if desc is None and map_name is None:
-            desc = generate_random_map()
+    def __init__(self, desc=None, map_name="4x4", is_slippery=True, size=None):
+        if desc is None and map_name is None and size is not None:
+            print('Using a randomly generated gridworld of {}x{}!'.format(size, size))
+            desc = generate_random_map(size=size)
         elif desc is None:
             desc = MAPS[map_name]
         self.desc = desc = np.asarray(desc,dtype='c')
