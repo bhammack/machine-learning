@@ -197,7 +197,7 @@ def value_iteration(env, discount=0.9, theta=1e-6):
     return policy
 
 
-def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_steps=300, total_episodes=15000):
+def q_learning(env, decay_rate=0.001, learning_rate=0.80, discount=0.90, max_steps=300, total_episodes=15000):
     """
     epsilon - exploration/exploitation rate
     learning_rate - learning rate
@@ -212,7 +212,6 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
     min_epsilon = 0.01
     max_epsilon = 1.0
     epsilon = 1.0
-    decay_rate = 0.0005
 
     # create the empty q table
     Q = np.zeros((env.observation_space.n, env.action_space.n))
@@ -222,6 +221,7 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
     terminating_states = {}
     paths = []
     state_visits = [0] * env.observation_space.n
+    goal_found = False
 
     for episode in range(total_episodes):
         if episode % 1000 == 0: print('Episode: {}/{}'.format(episode, total_episodes), end="\r", flush=True)
@@ -232,17 +232,18 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
         total_rewards = 0
         path = [state]
         state_visits[state] += 1
-        goal_found = False
+        # goal_found = False
 
         for step in range(max_steps):
             # if step == max_steps - 1: print('Exhausted maximum number of steps/moves!')
-            # env.render(), time.sleep(0.1)
+            # set_trace()
+            # print(env.state_mapping[env.s], end='\r', flush=True)
             # Exploration-exploitation tradeoff. Chose a random action, or the learned action.
             # If this number > greater than epsilon --> exploitation (taking the biggest Q value for this state)
             # Else doing a random choice --> exploration
             exploit = np.random.uniform(0, 1) > epsilon
             explore = not exploit
-            if exploit and goal_found:
+            if exploit and False:
                 action = np.argmax(Q[state, :]) # take the Q-learned action
             else:
                 action = env.action_space.sample() # take a random action
@@ -273,8 +274,11 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
                 else:
                     terminating_states[state] = 1
                 if reward > 0:
+                    if goal_found == False:
+                        print('Goal state found!\n')
+                        goal_found = True
                     # if not goal_found: print('Goal state found!')
-                    goal_found = True
+                    # goal_found = True
                 break
 
         # Reduce epsilon (because we need less and less exploration)
@@ -284,7 +288,7 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
         rewards.append(total_rewards)
         paths.append(path)
 
-    print("> score over time: " +  str(sum(rewards)/total_episodes))
+    print("> rewards over time: " +  str(sum(rewards)/total_episodes))
     print('> duration: {} secs'.format(time.time() - start))
     if args.plot: plt.plot(range(env.observation_space.n), state_visits, label='state visits'), plt.xlabel('state #'), plt.ylabel('visits'), plt.tight_layout(), plt.show()
     if args.lake:
@@ -303,7 +307,7 @@ def print_policy(policy):
     if args.tower:
         TOWER_ACTIONS = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
         print_list = list(map(lambda x: '{} -> {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
-        print(print_list)
+        # print(print_list)
         # for i in range(len(print_list)):
         #     print('{} [label={}]'.format(print_list[i], i))
         # print(print_list)

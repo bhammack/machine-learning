@@ -38,3 +38,32 @@ Note: Analysis writeup is limited to 10 pages total.
 Grading Criteria
 
 As always you are being graded on your analysis more than anything else.
+
+
+
+
+
+
+
+
+
+
+
+
+Scoring the policy...
+----------------------------------------------
+The policy used on average 8 moves before terminating
+The policy got stuck 90.80 % of the time
+----------------------------------------------
+PS C:\Users\Ben\Documents\GitHub\machine-learning> python .\reinforcement_learning\main.py --vi --tower --episodes 100000 --rings 3
+(2, 1, 0)
+> env number of states: 27
+> noise factor: 0.1
+> discount factor: 0.9
+> VI convergence: 28 iterations
+> duration: 0.013999462127685547 secs
+Scoring the policy...
+----------------------------------------------
+The policy used on average 8 moves before terminating
+The policy got stuck 19.50 % of the time
+----------------------------------------------
