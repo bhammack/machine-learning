@@ -208,7 +208,7 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
     min_epsilon = 0.01
     max_epsilon = 1.0
     epsilon = 1.0
-    decay_rate = 0.005
+    decay_rate = 0.0005
 
     # create the empty q table
     Q = np.zeros((env.observation_space.n, env.action_space.n))
@@ -228,6 +228,7 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
         total_rewards = 0
         path = [state]
         state_visits[state] += 1
+        goal_found = True
 
         for step in range(max_steps):
             # if step == max_steps - 1: print('Exhausted maximum number of steps/moves!')
@@ -237,7 +238,7 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
             # Else doing a random choice --> exploration
             exploit = np.random.uniform(0, 1) > epsilon
             explore = not exploit
-            if exploit:
+            if exploit and goal_found:
                 action = np.argmax(Q[state, :]) # take the Q-learned action
             else:
                 action = env.action_space.sample() # take a random action
@@ -267,7 +268,9 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
                     terminating_states[state] += 1
                 else:
                     terminating_states[state] = 1
-                #set_trace()
+                if reward > 0:
+                    # if not goal_found: print('Goal state found!')
+                    goal_found = True
                 break
 
         # Reduce epsilon (because we need less and less exploration)
@@ -280,7 +283,8 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
     print("> score over time: " +  str(sum(rewards)/total_episodes))
     print('> duration: {} secs'.format(time.time() - start))
     if args.plot: plt.plot(range(env.observation_space.n), state_visits, label='state visits'), plt.xlabel('state #'), plt.ylabel('visits'), plt.tight_layout(), plt.show()
-
+    if args.lake:
+        print(np.reshape(state_visits, [env.nrow, env.ncol]))
     set_trace()
     return Q
 
