@@ -193,7 +193,7 @@ def value_iteration(env, discount=0.9, theta=1e-6):
     return policy
 
 
-def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=100, total_episodes=15000):
+def q_learning(env, epsilon=1.0, learning_rate=0.80, discount=0.90, max_steps=100, total_episodes=15000):
     """
     epsilon - exploration/exploitation rate
     learning_rate - learning rate
@@ -216,14 +216,17 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
     start = time.time()
     terminating_states = {}
     paths = []
+    state_visits = [0] * env.observation_space.n
+
     for episode in range(total_episodes):
-        if episode % 500 == 0: print('Episode: {}/{}'.format(episode, total_episodes), end="\r", flush=True)
+        if episode % 1000 == 0: print('Episode: {}/{}'.format(episode, total_episodes), end="\r", flush=True)
 
         state = env.reset()
         done = False
         step = 0
         total_rewards = 0
         path = [state]
+        state_visits[state] += 1
 
         for step in range(max_steps):
             # env.render(), time.sleep(0.1)
@@ -235,6 +238,8 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
                 action = np.argmax(Q[state, :]) # take the Q-learned action
             else:
                 action = env.action_space.sample() # take a random action
+
+            # We went to this state. Log it
 
             # step into that action
             new_state, reward, done, info = env.step(action)
@@ -250,6 +255,7 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
             # Increase our reward earned for this step and log that we visited it
             total_rewards += reward
             path.append(state)
+            state_visits[state] += 1
 
             if done:
                 # Log the state where we currently are that caused termination
@@ -269,6 +275,8 @@ def q_learning(env, epsilon=1.0, learning_rate=0.81, discount=0.96, max_steps=10
 
     print("> score over time: " +  str(sum(rewards)/total_episodes))
     print('> duration: {} secs'.format(time.time() - start))
+    if args.plot: plt.plot(range(env.observation_space.n), state_visits, label='state visits'), plt.xlabel('state #'), plt.ylabel('visits'), plt.tight_layout(), plt.show()
+
     set_trace()
     return Q
 
@@ -336,7 +344,7 @@ def main():
         print(diffs)
         print('VI and PI policy differences: {}'.format(sum(diffs.values())))
     if args.q:
-        Q = q_learning(env)
+        Q = q_learning(env, total_episodes=args.episodes)
         # The optimal policy for Q learning is the argmax action with probability 1 - epsilon.
         q_policy = np.reshape(np.argmax(Q, axis=1), [env.nS]).tolist()
         policy = q_policy
@@ -365,6 +373,7 @@ if __name__ == "__main__":
     parser.add_argument('--noise', type=float, default=0.1, help='Noise value for Tower of Hanoi problem')
     parser.add_argument('--rings', type=int, default=6, help='Number of rings for Tower of Hanoi problem')
     parser.add_argument('--size', type=int, default=0, help='Size of random puzzle for Frozen Lake problem')
+    parser.add_argument('--episodes', type=int, default=100000, help='Number of episodes for q learning')
     args = parser.parse_args()
     if len(sys.argv) == 1:
         parser.print_help()
