@@ -61,6 +61,10 @@ class TohEnv(discrete.DiscreteEnv):
                 break
         return states
 
+    def reset(self):
+        self.s = self.inverse_mapping[self.initial_state]
+        return self.s
+
     def __init__(self, initial_state=((2, 1, 0), (), ()), goal_state=((), (), (2, 1, 0)), noise=0):
 
         self.initial_state = initial_state

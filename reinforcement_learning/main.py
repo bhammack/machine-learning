@@ -49,20 +49,24 @@ def score_tower_of_hanoi(env, policy, episodes=1000):
     """Run the policy on the environment, * episodes."""
     moves_list = []
     stuck_dict = {}
+    # paths = []
     for episode in range(episodes):
         observation = env.reset()
+        # path = []
         moves = 0
+        # set_trace()
         while True:
             action = policy[observation]
-            old_obs = observation
+            # old_obs = observation
+            # set_trace()
             observation, reward, done, _ = env.step(action)
             moves += 1
             # print(env.state_mapping[observation])
-            if done and reward == 100: # reward for final state
+            if done and reward > 0: # reward for final state
                #  print(moves)
                 moves_list.append(moves)
                 break
-            elif done and reward == 0 or observation == old_obs: # agent reached an invalid state and is stuck
+            elif done and reward == 0: # agent reached an invalid state and is stuck
             # elif done and reward == 0: # agent reached an invalid state and is stuck
                 if observation in stuck_dict:
                     stuck_dict[observation] += 1
@@ -70,7 +74,7 @@ def score_tower_of_hanoi(env, policy, episodes=1000):
                     stuck_dict[observation] = 1
                 break
     print('----------------------------------------------')
-    print('The policy used on average {:.0f} moves to get the final state'.format(np.mean(moves_list)))
+    print('The policy used on average {:.0f} moves before terminating'.format(np.mean(moves_list)))
     print('The policy got stuck {:.2f} % of the time'.format(sum(stuck_dict.values()) * 100/episodes, episodes))
     print('----------------------------------------------')
 
@@ -228,7 +232,7 @@ def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_ste
         total_rewards = 0
         path = [state]
         state_visits[state] += 1
-        goal_found = True
+        goal_found = False
 
         for step in range(max_steps):
             # if step == max_steps - 1: print('Exhausted maximum number of steps/moves!')
@@ -299,6 +303,7 @@ def print_policy(policy):
     if args.tower:
         TOWER_ACTIONS = [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]
         print_list = list(map(lambda x: '{} -> {}'.format(TOWER_ACTIONS[x][0], TOWER_ACTIONS[x][1]), policy))
+        print(print_list)
         # for i in range(len(print_list)):
         #     print('{} [label={}]'.format(print_list[i], i))
         # print(print_list)
