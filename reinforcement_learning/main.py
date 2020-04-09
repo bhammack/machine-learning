@@ -193,7 +193,7 @@ def value_iteration(env, discount=0.9, theta=1e-6):
     return policy
 
 
-def q_learning(env, epsilon=1.0, learning_rate=0.80, discount=0.90, max_steps=100, total_episodes=15000):
+def q_learning(env, decay_rate=0.005, learning_rate=0.80, discount=0.90, max_steps=300, total_episodes=15000):
     """
     epsilon - exploration/exploitation rate
     learning_rate - learning rate
@@ -207,6 +207,7 @@ def q_learning(env, epsilon=1.0, learning_rate=0.80, discount=0.90, max_steps=10
 
     min_epsilon = 0.01
     max_epsilon = 1.0
+    epsilon = 1.0
     decay_rate = 0.005
 
     # create the empty q table
@@ -229,12 +230,14 @@ def q_learning(env, epsilon=1.0, learning_rate=0.80, discount=0.90, max_steps=10
         state_visits[state] += 1
 
         for step in range(max_steps):
+            # if step == max_steps - 1: print('Exhausted maximum number of steps/moves!')
             # env.render(), time.sleep(0.1)
             # Exploration-exploitation tradeoff. Chose a random action, or the learned action.
             # If this number > greater than epsilon --> exploitation (taking the biggest Q value for this state)
             # Else doing a random choice --> exploration
-            exp_exp_tradeoff = np.random.uniform(0, 1)
-            if exp_exp_tradeoff > epsilon:
+            exploit = np.random.uniform(0, 1) > epsilon
+            explore = not exploit
+            if exploit:
                 action = np.argmax(Q[state, :]) # take the Q-learned action
             else:
                 action = env.action_space.sample() # take a random action
@@ -243,6 +246,7 @@ def q_learning(env, epsilon=1.0, learning_rate=0.80, discount=0.90, max_steps=10
 
             # step into that action
             new_state, reward, done, info = env.step(action)
+            # set_trace()
 
             # Update the q-table
             predict = Q[state, action]
