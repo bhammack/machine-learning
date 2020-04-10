@@ -1,69 +1,33 @@
-Numbers
+=====
+## Reinforcement Learning Analysis
+=====
 
-The assignment is worth 15% of your final grade.
+Project code can be found here: https://github.com/bhammack/machine-learning
 
-Read everything below carefully!
-Why?
+From the root of this repository, run the main.py script with arguments:
+ex: `python reinforcement_learning/main.py --vi --lake`
+One MDP learning method must be selected, either `--vi`, `--pi` or `--q`
+One MDP problem must be selected, either `--lake` or `--tower`
+usage: main.py [-h] [--lake] [--tower] [--vi] [--pi] [--q] [--plot] [--discount DISCOUNT] [--noise NOISE] [--rings RINGS] [--size SIZE]
+               [--episodes EPISODES]
 
-In some sense, we have spent the semester thinking about machine learning techniques for various forms of function approximation. It's now time to think about using what we've learned in order to allow an agent of some kind to act in the world more directly. This assignment asks you to consider the application of some of the techniques we've learned from reinforcement learning to make decisions.
+Select an experiment to run
 
-The same ground rules apply for programming languages as with the previous assignments.
-The Problems Given to You
+optional arguments:
+  -h, --help           show this help message and exit
+  --lake               Use the Frozen Lake gridworld problem
+  --tower              Use the Tower of Hanoi problem
+  --vi                 Solve using value iteration
+  --pi                 Solve using policy iteration
+  --q                  Solve using a Q-learner
+  --plot               Create plots
+  --discount DISCOUNT  Discount/gamma value to use
+  --noise NOISE        Noise value for Tower of Hanoi problem
+  --rings RINGS        Number of rings for Tower of Hanoi problem
+  --size SIZE          Size of random puzzle for Frozen Lake problem
+  --episodes EPISODES  Number of episodes for q learning
 
-You are being asked to explore Markov Decision Processes (MDPs):
-
-    Come up with two interesting MDPs. Explain why they are interesting. They don't need to be overly complicated or directly grounded in a real situation, but it will be worthwhile if your MDPs are inspired by some process you are interested in or are familiar with. It's ok to keep it somewhat simple. For the purposes of this assignment, though, make sure one has a "small" number of states, and the other has a "large" number of states. I'm not going to go into detail about what large is, but 200 is not large. Furthermore, because I like variety no more than one of the MDPs you choose should be a so-called grid world problem.
-    Solve each MDP using value iteration as well as policy iteration. How many iterations does it take to converge? Which one converges faster? Why? How did you choose to define convergence? Do they converge to the same answer? How did the number of states affect things, if at all?
-    Now pick your favorite reinforcement learning algorithm and use it to solve the two MDPs. How does it perform, especially in comparison to the cases above where you knew the model, rewards, and so on? What exploration strategies did you choose? Did some work better than others?
-
-Coding Resources
-
-The algorithms used in this assignment are relatively easy to implement. Existing implementations are easy to find too, below is just one example.
-
-Brown-UMBC Reinforcement Learning and Planning (BURLAP) java code library  (Links to an external site.)
-What to Turn In
-
-You must submit:
-
-    a file named README.txt that contains instructions for running your code
-    your code (link only in the README.txt)
-    a file named yourgtaccount-analysis.pdf that contains your writeup.
-
-The file yourgtaccount-analysis.pdf should contain:
-
-    A description of your MDPs and why they are interesting.
-    A discussion of your experiments.
-
-Note: Analysis writeup is limited to 10 pages total.
-Grading Criteria
-
-As always you are being graded on your analysis more than anything else.
-
-
-
-
-
-
-
-
-
-
-
-
-Scoring the policy...
-----------------------------------------------
-The policy used on average 8 moves before terminating
-The policy got stuck 90.80 % of the time
-----------------------------------------------
-PS C:\Users\Ben\Documents\GitHub\machine-learning> python .\reinforcement_learning\main.py --vi --tower --episodes 100000 --rings 3
-(2, 1, 0)
-> env number of states: 27
-> noise factor: 0.1
-> discount factor: 0.9
-> VI convergence: 28 iterations
-> duration: 0.013999462127685547 secs
-Scoring the policy...
-----------------------------------------------
-The policy used on average 8 moves before terminating
-The policy got stuck 19.50 % of the time
-----------------------------------------------
+Libraries used in this analysis include:
+- numpy
+- gym
+which must all be installed via pip

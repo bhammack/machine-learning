@@ -293,7 +293,7 @@ def q_learning(env, decay_rate=0.001, learning_rate=0.80, discount=0.90, max_ste
     if args.plot: plt.plot(range(env.observation_space.n), state_visits, label='state visits'), plt.xlabel('state #'), plt.ylabel('visits'), plt.tight_layout(), plt.show()
     if args.lake:
         print(np.reshape(state_visits, [env.nrow, env.ncol]))
-    set_trace()
+    # set_trace()
     return Q
 
 
